@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 MODELS_DIR = BASE_DIR / "models"
+DATA_DIR = BASE_DIR / "data"
 
 load_dotenv(BASE_DIR / ".env")
 
@@ -24,6 +25,14 @@ YOLO_MODEL_PATH = MODELS_DIR / "yolo11n_ncnn_model"
 YOLO_INPUT_SIZE = 640
 DETECTION_CONFIDENCE = 0.5
 NMS_IOU_THRESHOLD = 0.45
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY") or None
+OPENAI_MODELS = [m.strip() for m in os.environ.get("OPENAI_MODELS", "gpt-5.1").split(",") if m.strip()]
+CLOUD_MAX_IMAGE_DIMENSION = 1024
+CLOUD_REQUEST_TIMEOUT_SECONDS = 15.0
+DEFAULT_DAILY_LIMIT = 300
+MAX_DAILY_LIMIT = 5000
+AUTO_TRIGGER_COOLDOWN_SECONDS = 30.0
 
 STREAM_JPEG_QUALITY = 75
 STREAM_MAX_FPS = 15

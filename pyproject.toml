@@ -3,7 +3,7 @@ name = "maker-faire-rpi"
 version = "0.1.0"
 description = "Vision booth for Maker Faire Olomouc: local YOLO tracking, people counting, optional OpenAI scene description"
 requires-python = ">=3.11"
-dependencies = ["flask", "python-dotenv", "ncnn", "supervision>=0.26,<0.28","opencv-python-headless", "numpy"]
+dependencies = ["flask", "python-dotenv", "ncnn", "supervision>=0.26,<0.28","opencv-python-headless", "numpy", "openai"]
 
 [build-system]
 requires = ["hatchling"]
