@@ -4,13 +4,20 @@ from dataclasses import asdict
 from flask import Flask, Response, jsonify, render_template, request
 
 from maker_vision import config
+from maker_vision.counter import PeopleCounter
 from maker_vision.describe import OPENAI_AVAILABLE, Describer
 from maker_vision.pipeline import Pipeline
 from maker_vision.settings import CLOUD_MODES, SettingsStore
 from maker_vision.usage import UsageCounter
 
 
-def create_app(pipeline: Pipeline, settings: SettingsStore, usage: UsageCounter, describer: Describer) -> Flask:
+def create_app(
+    pipeline: Pipeline,
+    settings: SettingsStore,
+    usage: UsageCounter,
+    describer: Describer,
+    counter: PeopleCounter,
+) -> Flask:
     app = Flask(__name__)
 
     def mjpeg():
@@ -68,7 +75,17 @@ def create_app(pipeline: Pipeline, settings: SettingsStore, usage: UsageCounter,
             "frame_age": round(time.time() - snapshot.captured_at, 2) if snapshot.captured_at else None,
             "people_now": len(snapshot.detections),
             "cloud": cloud_state(),
+            "counter": counter.snapshot(),
         })
+
+    @app.route("/api/counter", methods=["GET"])
+    def counter_state():
+        return jsonify({**counter.snapshot(), "line": settings.get().count_line})
+
+    @app.route("/api/counter/reset", methods=["POST"])
+    def counter_reset():
+        counter.reset()
+        return jsonify(counter.snapshot())
 
     @app.route("/api/settings", methods=["GET"])
     def get_settings():

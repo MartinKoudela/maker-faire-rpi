@@ -1,4 +1,5 @@
 from maker_vision import config
+from maker_vision.counter import PeopleCounter
 from maker_vision.describe import AutoTrigger, Describer
 from maker_vision.pipeline import Pipeline
 from maker_vision.settings import SettingsStore
@@ -11,13 +12,15 @@ def main() -> None:
     usage = UsageCounter(config.DATA_DIR / "usage.json")
     pipeline = Pipeline()
     describer = Describer(settings, usage)
+    counter = PeopleCounter(pipeline, settings, config.DATA_DIR / "counter.json")
 
     pipeline.start()
     describer.start()
+    counter.start()
     AutoTrigger(pipeline, describer, settings).start()
 
     try:
-        create_app(pipeline, settings, usage, describer).run(host=config.WEB_HOST, port=config.WEB_PORT, threaded=True)
+        create_app(pipeline, settings, usage, describer, counter).run(host=config.WEB_HOST, port=config.WEB_PORT, threaded=True)
     finally:
         pipeline.stop()
 

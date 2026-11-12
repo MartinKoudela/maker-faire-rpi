@@ -13,13 +13,28 @@ class Settings:
     cloud_mode: str
     daily_limit: int
     model: str
+    count_line: tuple[float, float, float, float]
 
 
 DEFAULT_SETTINGS = Settings(
     cloud_mode="off",
     daily_limit=config.DEFAULT_DAILY_LIMIT,
     model=config.OPENAI_MODELS[0],
+    count_line=config.DEFAULT_COUNT_LINE,
 )
+
+
+def _parse_line(value) -> tuple[float, float, float, float]:
+    if not isinstance(value, (list, tuple)) or len(value) != 4:
+        raise ValueError("count_line must be [x1, y1, x2, y2]")
+    points = []
+    for number in value:
+        if isinstance(number, bool) or not isinstance(number, (int, float)) or not 0.0 <= number <= 1.0:
+            raise ValueError("count_line values must be numbers 0-1")
+        points.append(float(number))
+    if abs(points[0] - points[2]) + abs(points[1] - points[3]) < 0.05:
+        raise ValueError("count_line is too short")
+    return tuple(points)
 
 
 def _apply(base: Settings, changes: dict) -> Settings:
@@ -34,6 +49,8 @@ def _apply(base: Settings, changes: dict) -> Settings:
         elif key == "model":
             if value not in config.OPENAI_MODELS:
                 raise ValueError(f"model must be one of {config.OPENAI_MODELS}")
+        elif key == "count_line":
+            value = _parse_line(value)
         else:
             raise ValueError(f"unknown setting: {key}")
         values[key] = value
