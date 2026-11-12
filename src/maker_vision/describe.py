@@ -8,6 +8,13 @@ from collections import deque
 import cv2
 import numpy as np
 
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
+
+OPENAI_AVAILABLE = OpenAI is not None
+
 from maker_vision import config
 from maker_vision.pipeline import Pipeline
 from maker_vision.settings import SettingsStore
@@ -94,6 +101,8 @@ class Describer:
             return "cloud_off"
         if source == "auto" and settings.cloud_mode != "auto":
             return "auto_disabled"
+        if OpenAI is None:
+            return "missing_openai_package"
         if config.OPENAI_API_KEY is None:
             return "missing_api_key"
 
@@ -160,8 +169,6 @@ class Describer:
 
     def _get_client(self):
         if self._client is None:
-            from openai import OpenAI
-
             self._client = OpenAI(
                 api_key=config.OPENAI_API_KEY,
                 timeout=config.CLOUD_REQUEST_TIMEOUT_SECONDS,

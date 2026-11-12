@@ -4,7 +4,7 @@ from dataclasses import asdict
 from flask import Flask, Response, jsonify, render_template, request
 
 from maker_vision import config
-from maker_vision.describe import Describer
+from maker_vision.describe import OPENAI_AVAILABLE, Describer
 from maker_vision.pipeline import Pipeline
 from maker_vision.settings import CLOUD_MODES, SettingsStore
 from maker_vision.usage import UsageCounter
@@ -30,6 +30,7 @@ def create_app(pipeline: Pipeline, settings: SettingsStore, usage: UsageCounter,
             **asdict(current),
             "usage": usage.snapshot(),
             "api_key": config.OPENAI_API_KEY is not None,
+            "openai_package": OPENAI_AVAILABLE,
             "busy": describer.state()["busy"],
         }
 

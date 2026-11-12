@@ -136,6 +136,7 @@
         cloud_off: "Cloud AI je vypnutá.",
         auto_disabled: "Auto režim není zapnutý.",
         missing_api_key: "Chybí OPENAI_API_KEY v .env.",
+        missing_openai_package: "Chybí balíček openai (pip install -e .).",
         busy: "Ještě přemýšlím nad předchozím snímkem…",
         daily_limit: "Denní strop volání je vyčerpaný.",
         no_frame: "Kamera ještě neposlala snímek.",
@@ -204,11 +205,12 @@
             `Dnes ${used} / ${limit} volání · ${tokens.toLocaleString("cs-CZ")} tokenů`;
 
         let warning = "";
-        if (!cloud.api_key) warning = REASONS.missing_api_key;
+        if (!cloud.openai_package) warning = REASONS.missing_openai_package;
+        else if (!cloud.api_key) warning = REASONS.missing_api_key;
         else if (used >= limit && cloud.cloud_mode !== "off") warning = REASONS.daily_limit;
         alertInline(warning);
 
-        const canAsk = cloud.cloud_mode !== "off" && cloud.api_key && used < limit && !cloud.busy;
+        const canAsk = cloud.cloud_mode !== "off" && cloud.openai_package && cloud.api_key && used < limit && !cloud.busy;
         askButton.disabled = !canAsk;
         if (cloud.busy) askMessage.textContent = "Přemýšlím…";
         else if (cloud.cloud_mode === "off") askMessage.textContent = REASONS.cloud_off;
