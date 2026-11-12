@@ -1,0 +1,18 @@
+[Unit]
+Description=Maker Vision booth (YOLO tracking + web dashboard)
+After=network-online.target
+Wants=network-online.target
+Conflicts=g1-vision.service rpi-cam.service
+
+[Service]
+Type=simple
+User=g1-admin
+SupplementaryGroups=video gpio
+WorkingDirectory=/home/g1-admin/maker-faire-rpi
+ExecStart=/home/g1-admin/maker-faire-rpi/.venv/bin/python -m maker_vision
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

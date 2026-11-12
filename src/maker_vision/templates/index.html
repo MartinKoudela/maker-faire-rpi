@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Maker Vision</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0b0f14;
+            color: #e6edf3;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+        }
+        header {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            padding: 12px 18px;
+            background: #101720;
+            border-bottom: 1px solid #1c2733;
+            font-size: 14px;
+        }
+        header h1 { font-size: 15px; font-weight: 600; margin-right: auto; }
+        .stat b { font-variant-numeric: tabular-nums; }
+        main { padding: 14px; max-width: 1280px; margin: 0 auto; }
+        #wrap { position: relative; border-radius: 10px; overflow: hidden; background: #000; }
+        #stream { display: block; width: 100%; }
+        #overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Maker Vision</h1>
+    <span class="stat">Lidí teď: <b id="people">–</b></span>
+    <span class="stat">FPS: <b id="fps">–</b></span>
+    <span class="stat">Stáří snímku: <b id="age">–</b></span>
+</header>
+<main>
+    <div id="wrap">
+        <img id="stream" src="/stream" alt="stream">
+        <canvas id="overlay"></canvas>
+    </div>
+</main>
+<script>
+    const canvas = document.getElementById("overlay");
+    const ctx = canvas.getContext("2d");
+
+    async function drawBoxes() {
+        try {
+            const response = await fetch("/api/detections");
+            const data = await response.json();
+            canvas.width = data.frame_width;
+            canvas.height = data.frame_height;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.lineWidth = 3;
+            ctx.font = "bold 22px sans-serif";
+            for (const box of data.boxes) {
+                const [x1, y1, x2, y2] = box.xyxy;
+                ctx.strokeStyle = "#2ea043";
+                ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                ctx.fillStyle = "#2ea043";
+                ctx.fillText(`#${box.track_id}`, x1 + 6, y1 + 24);
+            }
+        } catch (error) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    async function refreshStatus() {
+        try {
+            const response = await fetch("/api/status");
+            const data = await response.json();
+            document.getElementById("people").textContent = data.people_now;
+            document.getElementById("fps").textContent = data.fps;
+            document.getElementById("age").textContent = data.frame_age === null ? "–" : `${data.frame_age} s`;
+        } catch (error) {
+            document.getElementById("fps").textContent = "offline";
+        }
+    }
+
+    setInterval(drawBoxes, 200);
+    setInterval(refreshStatus, 1000);
+</script>
+</body>
+</html>
