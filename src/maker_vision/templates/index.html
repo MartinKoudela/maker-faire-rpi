@@ -23,10 +23,67 @@
         }
         header h1 { font-size: 15px; font-weight: 600; margin-right: auto; }
         .stat b { font-variant-numeric: tabular-nums; }
-        main { padding: 14px; max-width: 1280px; margin: 0 auto; }
-        #wrap { position: relative; border-radius: 10px; overflow: hidden; background: #000; }
+        main {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 14px;
+            padding: 14px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        @media (max-width: 960px) { main { grid-template-columns: 1fr; } }
+        #wrap { position: relative; border-radius: 10px; overflow: hidden; background: #000; align-self: start; }
         #stream { display: block; width: 100%; }
         #overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        aside { display: flex; flex-direction: column; gap: 14px; }
+        .card { background: #101720; border: 1px solid #1c2733; border-radius: 10px; padding: 14px; }
+        .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: #8b98a5; margin-bottom: 12px; }
+        .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; font-size: 14px; }
+        .segmented { display: flex; border: 1px solid #2a3846; border-radius: 8px; overflow: hidden; }
+        .segmented button {
+            background: transparent;
+            color: #c9d1d9;
+            border: 0;
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .segmented button + button { border-left: 1px solid #2a3846; }
+        .segmented button.active { background: #1f6feb; color: #fff; }
+        input, select {
+            background: #0b0f14;
+            color: #e6edf3;
+            border: 1px solid #2a3846;
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 13px;
+        }
+        input[type=number] { width: 90px; }
+        .bar { height: 6px; background: #1c2733; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+        .bar div { height: 100%; background: #2ea043; width: 0; transition: width 0.3s; }
+        .bar div.warn { background: #d29922; }
+        .bar div.full { background: #f85149; }
+        .muted { color: #8b98a5; font-size: 12px; }
+        .warning { color: #f85149; font-size: 13px; margin-top: 8px; }
+        #ask {
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            font-weight: 600;
+            border: 0;
+            border-radius: 10px;
+            background: #1f6feb;
+            color: #fff;
+            cursor: pointer;
+        }
+        #ask:disabled { background: #2a3846; color: #8b98a5; cursor: not-allowed; }
+        #ask-message { min-height: 18px; margin-top: 8px; }
+        .result { border-top: 1px solid #1c2733; padding-top: 10px; margin-top: 10px; font-size: 14px; }
+        .result:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+        .result .meta { color: #8b98a5; font-size: 12px; margin-bottom: 4px; }
+        .result .summary { font-size: 15px; margin-bottom: 6px; }
+        .result ul { padding-left: 18px; color: #c9d1d9; }
+        .result .error { color: #f85149; }
     </style>
 </head>
 <body>
@@ -41,10 +98,169 @@
         <img id="stream" src="/stream" alt="stream">
         <canvas id="overlay"></canvas>
     </div>
+    <aside>
+        <section class="card">
+            <h2>Cloud AI</h2>
+            <div class="row">
+                <span>Režim</span>
+                <div class="segmented" id="cloud-mode">
+                    <button data-value="off">Vyp</button>
+                    <button data-value="manual">Tlačítko</button>
+                    <button data-value="auto">Auto</button>
+                </div>
+            </div>
+            <div class="row">
+                <span>Denní strop volání</span>
+                <input type="number" id="daily-limit" min="0" step="10">
+            </div>
+            <div class="row">
+                <span>Model</span>
+                <select id="model"></select>
+            </div>
+            <div class="bar"><div id="usage-bar"></div></div>
+            <div class="muted" id="usage-text">–</div>
+            <div class="warning" id="cloud-warning"></div>
+        </section>
+        <section class="card">
+            <button id="ask">Co vidíš?</button>
+            <div class="muted" id="ask-message"></div>
+        </section>
+        <section class="card">
+            <h2>Poslední popisy</h2>
+            <div id="results" class="muted">Zatím nic.</div>
+        </section>
+    </aside>
 </main>
 <script>
+    const REASONS = {
+        cloud_off: "Cloud AI je vypnutá.",
+        auto_disabled: "Auto režim není zapnutý.",
+        missing_api_key: "Chybí OPENAI_API_KEY v .env.",
+        busy: "Ještě přemýšlím nad předchozím snímkem…",
+        daily_limit: "Denní strop volání je vyčerpaný.",
+        no_frame: "Kamera ještě neposlala snímek.",
+    };
+    const SOURCES = { manual: "tlačítko", auto: "auto" };
+
     const canvas = document.getElementById("overlay");
     const ctx = canvas.getContext("2d");
+    const askButton = document.getElementById("ask");
+    const askMessage = document.getElementById("ask-message");
+    let lastResultId = null;
+
+    async function postSettings(changes) {
+        const response = await fetch("/api/settings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(changes),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            alertInline(data.error);
+        }
+        await refreshStatus();
+    }
+
+    function alertInline(text) {
+        document.getElementById("cloud-warning").textContent = text || "";
+    }
+
+    async function loadSettings() {
+        const response = await fetch("/api/settings");
+        const data = await response.json();
+        const select = document.getElementById("model");
+        select.innerHTML = "";
+        for (const model of data.options.model) {
+            const option = document.createElement("option");
+            option.value = model;
+            option.textContent = model;
+            select.appendChild(option);
+        }
+        document.getElementById("daily-limit").max = data.options.max_daily_limit;
+        applySettings(data.settings);
+    }
+
+    function applySettings(settings) {
+        for (const button of document.querySelectorAll("#cloud-mode button")) {
+            button.classList.toggle("active", button.dataset.value === settings.cloud_mode);
+        }
+        const limitInput = document.getElementById("daily-limit");
+        if (document.activeElement !== limitInput) {
+            limitInput.value = settings.daily_limit;
+        }
+        document.getElementById("model").value = settings.model;
+    }
+
+    function renderCloud(cloud) {
+        applySettings(cloud);
+        const used = cloud.usage.calls;
+        const limit = cloud.daily_limit;
+        const ratio = limit > 0 ? Math.min(used / limit, 1) : 1;
+        const bar = document.getElementById("usage-bar");
+        bar.style.width = `${ratio * 100}%`;
+        bar.className = ratio >= 1 ? "full" : ratio >= 0.8 ? "warn" : "";
+        const tokens = cloud.usage.input_tokens + cloud.usage.output_tokens;
+        document.getElementById("usage-text").textContent =
+            `Dnes ${used} / ${limit} volání · ${tokens.toLocaleString("cs-CZ")} tokenů`;
+
+        let warning = "";
+        if (!cloud.api_key) warning = REASONS.missing_api_key;
+        else if (used >= limit && cloud.cloud_mode !== "off") warning = REASONS.daily_limit;
+        alertInline(warning);
+
+        const canAsk = cloud.cloud_mode !== "off" && cloud.api_key && used < limit && !cloud.busy;
+        askButton.disabled = !canAsk;
+        if (cloud.busy) askMessage.textContent = "Přemýšlím…";
+        else if (cloud.cloud_mode === "off") askMessage.textContent = REASONS.cloud_off;
+        else if (askMessage.textContent === "Přemýšlím…") askMessage.textContent = "";
+    }
+
+    function renderResults(results) {
+        const container = document.getElementById("results");
+        if (results.length === 0) {
+            container.textContent = "Zatím nic.";
+            return;
+        }
+        if (results[0].id === lastResultId) return;
+        lastResultId = results[0].id;
+        container.innerHTML = "";
+        container.classList.remove("muted");
+        for (const result of results) {
+            const item = document.createElement("div");
+            item.className = "result";
+
+            const meta = document.createElement("div");
+            meta.className = "meta";
+            meta.textContent = `${result.time} · ${SOURCES[result.source] || result.source} · ${result.model} · ${result.duration} s`;
+            item.appendChild(meta);
+
+            if (result.status === "ok") {
+                const summary = document.createElement("div");
+                summary.className = "summary";
+                summary.textContent = result.summary;
+                item.appendChild(summary);
+
+                const list = document.createElement("ul");
+                for (const person of result.people) {
+                    const li = document.createElement("li");
+                    li.textContent = `${person.description} – ${person.activity}`;
+                    list.appendChild(li);
+                }
+                if (result.objects.length > 0) {
+                    const li = document.createElement("li");
+                    li.textContent = `Věci: ${result.objects.join(", ")}`;
+                    list.appendChild(li);
+                }
+                item.appendChild(list);
+            } else {
+                const error = document.createElement("div");
+                error.className = "error";
+                error.textContent = result.error;
+                item.appendChild(error);
+            }
+            container.appendChild(item);
+        }
+    }
 
     async function drawBoxes() {
         try {
@@ -74,13 +290,47 @@
             document.getElementById("people").textContent = data.people_now;
             document.getElementById("fps").textContent = data.fps;
             document.getElementById("age").textContent = data.frame_age === null ? "–" : `${data.frame_age} s`;
+            renderCloud(data.cloud);
         } catch (error) {
             document.getElementById("fps").textContent = "offline";
         }
     }
 
+    async function refreshResults() {
+        try {
+            const response = await fetch("/api/describe");
+            const data = await response.json();
+            renderResults(data.results);
+        } catch (error) {
+        }
+    }
+
+    for (const button of document.querySelectorAll("#cloud-mode button")) {
+        button.addEventListener("click", () => postSettings({ cloud_mode: button.dataset.value }));
+    }
+    document.getElementById("daily-limit").addEventListener("change", (event) => {
+        const value = Number.parseInt(event.target.value, 10);
+        if (Number.isInteger(value)) postSettings({ daily_limit: value });
+    });
+    document.getElementById("model").addEventListener("change", (event) => postSettings({ model: event.target.value }));
+
+    askButton.addEventListener("click", async () => {
+        askButton.disabled = true;
+        askMessage.textContent = "Přemýšlím…";
+        const response = await fetch("/api/describe", { method: "POST" });
+        if (!response.ok) {
+            const data = await response.json();
+            askMessage.textContent = REASONS[data.error] || data.error;
+        }
+        await refreshStatus();
+    });
+
+    loadSettings();
+    refreshStatus();
+    refreshResults();
     setInterval(drawBoxes, 200);
     setInterval(refreshStatus, 1000);
+    setInterval(refreshResults, 1000);
 </script>
 </body>
 </html>
