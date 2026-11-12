@@ -35,6 +35,24 @@
         #wrap { position: relative; border-radius: 10px; overflow: hidden; background: #000; align-self: start; }
         #stream { display: block; width: 100%; }
         #overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        #overlay.picking { pointer-events: auto; cursor: crosshair; }
+        .counts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .count { background: #0b0f14; border: 1px solid #1c2733; border-radius: 8px; padding: 10px; }
+        .count b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; }
+        .count span { color: #8b98a5; font-size: 12px; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .actions button {
+            flex: 1;
+            background: #1c2733;
+            color: #e6edf3;
+            border: 1px solid #2a3846;
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .actions button.active { background: #1f6feb; border-color: #1f6feb; }
+        .actions button.danger { color: #f85149; }
         aside { display: flex; flex-direction: column; gap: 14px; }
         .card { background: #101720; border: 1px solid #1c2733; border-radius: 10px; padding: 14px; }
         .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: #8b98a5; margin-bottom: 12px; }
@@ -100,6 +118,22 @@
     </div>
     <aside>
         <section class="card">
+            <h2>Počítání lidí</h2>
+            <div class="counts">
+                <div class="count"><b id="count-now">–</b><span>teď v záběru</span></div>
+                <div class="count"><b id="count-unique">–</b><span>dnes celkem</span></div>
+                <div class="count"><b id="count-in">–</b><span>přes čáru A → B</span></div>
+                <div class="count"><b id="count-out">–</b><span>přes čáru B → A</span></div>
+            </div>
+            <div class="muted" id="count-peak" style="margin-bottom: 10px;">–</div>
+            <div class="actions">
+                <button id="line-pick">Nastavit čáru</button>
+                <button id="line-flip">Otočit směr</button>
+                <button id="count-reset" class="danger">Vynulovat</button>
+            </div>
+            <div class="muted" id="line-message" style="margin-top: 8px;"></div>
+        </section>
+        <section class="card">
             <h2>Cloud AI</h2>
             <div class="row">
                 <span>Režim</span>
@@ -148,6 +182,9 @@
     const askButton = document.getElementById("ask");
     const askMessage = document.getElementById("ask-message");
     let lastResultId = null;
+    let countLine = null;
+    let pickedPoints = null;
+    let resetArmedUntil = 0;
 
     async function postSettings(changes) {
         const response = await fetch("/api/settings", {
@@ -271,6 +308,7 @@
             canvas.width = data.frame_width;
             canvas.height = data.frame_height;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawLine();
             ctx.lineWidth = 3;
             ctx.font = "bold 22px sans-serif";
             for (const box of data.boxes) {
@@ -285,6 +323,47 @@
         }
     }
 
+    function drawLine() {
+        const points = pickedPoints && pickedPoints.length === 1 ? null : countLine;
+        if (pickedPoints && pickedPoints.length === 1) {
+            const [x, y] = pickedPoints[0];
+            ctx.fillStyle = "#d29922";
+            ctx.beginPath();
+            ctx.arc(x * canvas.width, y * canvas.height, 10, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        if (!points) return;
+        const [x1, y1, x2, y2] = points.map((v, i) => v * (i % 2 === 0 ? canvas.width : canvas.height));
+        ctx.save();
+        ctx.strokeStyle = "#d29922";
+        ctx.lineWidth = 4;
+        ctx.setLineDash([16, 10]);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        const mx = (x1 + x2) / 2;
+        const my = (y1 + y2) / 2;
+        const length = Math.hypot(x2 - x1, y2 - y1);
+        const nx = (y2 - y1) / length;
+        const ny = -(x2 - x1) / length;
+        ctx.fillStyle = "#d29922";
+        ctx.font = "bold 26px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("A", mx - nx * 40, my - ny * 40);
+        ctx.fillText("B", mx + nx * 40, my + ny * 40);
+        ctx.restore();
+    }
+
+    function renderCounter(counter) {
+        document.getElementById("count-now").textContent = counter.now;
+        document.getElementById("count-unique").textContent = counter.unique_today;
+        document.getElementById("count-in").textContent = counter.line_in;
+        document.getElementById("count-out").textContent = counter.line_out;
+        document.getElementById("count-peak").textContent = `Nejvíc naráz dnes: ${counter.peak_today}`;
+    }
+
     async function refreshStatus() {
         try {
             const response = await fetch("/api/status");
@@ -293,6 +372,8 @@
             document.getElementById("fps").textContent = data.fps;
             document.getElementById("age").textContent = data.frame_age === null ? "–" : `${data.frame_age} s`;
             renderCloud(data.cloud);
+            renderCounter(data.counter);
+            countLine = data.cloud.count_line;
         } catch (error) {
             document.getElementById("fps").textContent = "offline";
         }
@@ -324,6 +405,58 @@
             const data = await response.json();
             askMessage.textContent = REASONS[data.error] || data.error;
         }
+        await refreshStatus();
+    });
+
+    const linePick = document.getElementById("line-pick");
+    const lineMessage = document.getElementById("line-message");
+
+    linePick.addEventListener("click", () => {
+        if (pickedPoints) {
+            pickedPoints = null;
+            canvas.classList.remove("picking");
+            linePick.classList.remove("active");
+            lineMessage.textContent = "";
+            return;
+        }
+        pickedPoints = [];
+        canvas.classList.add("picking");
+        linePick.classList.add("active");
+        lineMessage.textContent = "Klikni do videa na začátek a konec čáry.";
+    });
+
+    canvas.addEventListener("click", async (event) => {
+        if (!pickedPoints) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1);
+        const y = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
+        pickedPoints.push([x, y]);
+        if (pickedPoints.length < 2) return;
+        const line = [...pickedPoints[0], ...pickedPoints[1]];
+        pickedPoints = null;
+        canvas.classList.remove("picking");
+        linePick.classList.remove("active");
+        lineMessage.textContent = "";
+        await postSettings({ count_line: line });
+    });
+
+    document.getElementById("line-flip").addEventListener("click", async () => {
+        if (!countLine) return;
+        const [x1, y1, x2, y2] = countLine;
+        await postSettings({ count_line: [x2, y2, x1, y1] });
+    });
+
+    const resetButton = document.getElementById("count-reset");
+    resetButton.addEventListener("click", async () => {
+        if (Date.now() > resetArmedUntil) {
+            resetArmedUntil = Date.now() + 3000;
+            resetButton.textContent = "Opravdu?";
+            setTimeout(() => { resetButton.textContent = "Vynulovat"; }, 3000);
+            return;
+        }
+        resetArmedUntil = 0;
+        resetButton.textContent = "Vynulovat";
+        await fetch("/api/counter/reset", { method: "POST" });
         await refreshStatus();
     });
 
