@@ -22,11 +22,44 @@ export function postJson(url, body) {
     });
 }
 
+export class HeatmapLayer {
+    constructor() {
+        this.image = null;
+        this.loading = false;
+    }
+
+    refresh() {
+        if (this.loading) return;
+        this.loading = true;
+        const image = new Image();
+        image.onload = () => {
+            this.image = image;
+            this.loading = false;
+        };
+        image.onerror = () => {
+            this.loading = false;
+        };
+        image.src = `/api/heatmap.png?t=${Date.now()}`;
+    }
+
+    clear() {
+        this.image = null;
+    }
+}
+
 export function drawOverlay(canvas, detections, options = {}) {
     const ctx = canvas.getContext("2d");
     canvas.width = detections.frame_width;
     canvas.height = detections.frame_height;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (options.heatmap) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(options.heatmap, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+    }
 
     if (options.line) drawCountLine(ctx, canvas, options.line);
     if (options.pendingPoint) drawPoint(ctx, canvas, options.pendingPoint);

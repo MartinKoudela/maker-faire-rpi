@@ -6,6 +6,7 @@ from flask import Flask, Response, jsonify, render_template, request
 from maker_vision import config
 from maker_vision.counter import PeopleCounter
 from maker_vision.describe import OPENAI_AVAILABLE, Describer
+from maker_vision.heatmap import Heatmap
 from maker_vision.pipeline import Pipeline
 from maker_vision.settings import CLOUD_MODES, SettingsStore
 from maker_vision.system import SystemMonitor
@@ -19,6 +20,7 @@ def create_app(
     describer: Describer,
     counter: PeopleCounter,
     system: SystemMonitor,
+    heatmap: Heatmap,
 ) -> Flask:
     app = Flask(__name__)
 
@@ -99,6 +101,15 @@ def create_app(
     def counter_reset():
         counter.reset()
         return jsonify(counter.snapshot())
+
+    @app.route("/api/heatmap.png")
+    def heatmap_png():
+        return Response(heatmap.render_png(), mimetype="image/png", headers={"Cache-Control": "no-store"})
+
+    @app.route("/api/heatmap/clear", methods=["POST"])
+    def heatmap_clear():
+        heatmap.clear()
+        return jsonify({"status": "cleared"})
 
     @app.route("/api/settings", methods=["GET"])
     def get_settings():

@@ -15,6 +15,7 @@ class Settings:
     model: str
     count_line: tuple[float, float, float, float]
     blur_faces: bool
+    show_heatmap: bool
 
 
 DEFAULT_SETTINGS = Settings(
@@ -23,6 +24,7 @@ DEFAULT_SETTINGS = Settings(
     model=config.OPENAI_MODELS[0],
     count_line=config.DEFAULT_COUNT_LINE,
     blur_faces=False,
+    show_heatmap=False,
 )
 
 
@@ -53,9 +55,9 @@ def _apply(base: Settings, changes: dict) -> Settings:
                 raise ValueError(f"model must be one of {config.OPENAI_MODELS}")
         elif key == "count_line":
             value = _parse_line(value)
-        elif key == "blur_faces":
+        elif key in ("blur_faces", "show_heatmap"):
             if not isinstance(value, bool):
-                raise ValueError("blur_faces must be true or false")
+                raise ValueError(f"{key} must be true or false")
         else:
             raise ValueError(f"unknown setting: {key}")
         values[key] = value

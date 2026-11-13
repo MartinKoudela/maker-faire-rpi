@@ -98,7 +98,7 @@
     <span>Maker Faire Olomouc</span>
 </footer>
 <script type="module">
-    import { drawOverlay, fetchJson } from "/static/js/common.js";
+    import { HeatmapLayer, drawOverlay, fetchJson } from "/static/js/common.js";
 
     const RESULT_TTL_SECONDS = 120;
     const HINT = "Kamera v reálném čase hledá lidi a počítá, kolik vás dnes přišlo. Umí taky popsat, co právě vidí.";
@@ -106,6 +106,8 @@
     const canvas = document.getElementById("overlay");
     const content = document.getElementById("ai-content");
     let renderedKey = null;
+    let showHeatmap = false;
+    const heatmap = new HeatmapLayer();
 
     function element(tag, className, text) {
         const node = document.createElement(tag);
@@ -149,7 +151,7 @@
     async function refreshOverlay() {
         try {
             const { data } = await fetchJson("/api/detections");
-            drawOverlay(canvas, data, { showIds: true });
+            drawOverlay(canvas, data, { showIds: true, heatmap: showHeatmap ? heatmap.image : null });
         } catch (error) {
         }
     }
@@ -157,6 +159,8 @@
     async function refreshInfo() {
         try {
             const [status, describe] = await Promise.all([fetchJson("/api/status"), fetchJson("/api/describe")]);
+            showHeatmap = status.data.cloud.show_heatmap;
+            if (showHeatmap) heatmap.refresh();
             document.getElementById("now").textContent = status.data.counter.now;
             document.getElementById("today").textContent = status.data.counter.unique_today;
             document.getElementById("privacy").textContent = status.data.cloud.cloud_mode === "off"

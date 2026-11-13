@@ -149,6 +149,16 @@
                     <button data-value="true">Zap</button>
                 </div>
             </div>
+            <div class="row">
+                <span>Heatmapa pohybu</span>
+                <div style="display: flex; gap: 8px;">
+                    <div class="segmented" id="show-heatmap">
+                        <button data-value="false">Vyp</button>
+                        <button data-value="true">Zap</button>
+                    </div>
+                    <div class="actions"><button id="heatmap-clear">Vymazat</button></div>
+                </div>
+            </div>
             <div class="muted" id="timings">–</div>
         </section>
         <section class="card">
@@ -184,7 +194,7 @@
     </aside>
 </main>
 <script type="module">
-    import { REASONS, drawOverlay, fetchJson, postJson } from "/static/js/common.js";
+    import { HeatmapLayer, REASONS, drawOverlay, fetchJson, postJson } from "/static/js/common.js";
 
     const SOURCES = { manual: "tlačítko", auto: "auto" };
 
@@ -195,6 +205,8 @@
     let countLine = null;
     let pickedPoints = null;
     let resetArmedUntil = 0;
+    let showHeatmap = false;
+    const heatmap = new HeatmapLayer();
 
     async function postSettings(changes) {
         const { ok, data } = await postJson("/api/settings", changes);
@@ -234,6 +246,10 @@
         for (const button of document.querySelectorAll("#blur-faces button")) {
             button.classList.toggle("active", button.dataset.value === String(settings.blur_faces));
         }
+        for (const button of document.querySelectorAll("#show-heatmap button")) {
+            button.classList.toggle("active", button.dataset.value === String(settings.show_heatmap));
+        }
+        showHeatmap = settings.show_heatmap;
     }
 
     function renderCloud(cloud) {
@@ -312,7 +328,11 @@
         try {
             const { data } = await fetchJson("/api/detections");
             const pendingPoint = pickedPoints && pickedPoints.length === 1 ? pickedPoints[0] : null;
-            drawOverlay(canvas, data, { line: pendingPoint ? null : countLine, pendingPoint });
+            drawOverlay(canvas, data, {
+                line: pendingPoint ? null : countLine,
+                pendingPoint,
+                heatmap: showHeatmap ? heatmap.image : null,
+            });
         } catch (error) {
             canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
         }
@@ -375,6 +395,14 @@
     for (const button of document.querySelectorAll("#cloud-mode button")) {
         button.addEventListener("click", () => postSettings({ cloud_mode: button.dataset.value }));
     }
+    for (const button of document.querySelectorAll("#show-heatmap button")) {
+        button.addEventListener("click", () => postSettings({ show_heatmap: button.dataset.value === "true" }));
+    }
+    document.getElementById("heatmap-clear").addEventListener("click", async () => {
+        await postJson("/api/heatmap/clear");
+        heatmap.clear();
+        heatmap.refresh();
+    });
     for (const button of document.querySelectorAll("#blur-faces button")) {
         button.addEventListener("click", () => postSettings({ blur_faces: button.dataset.value === "true" }));
     }
@@ -450,6 +478,7 @@
     refreshStatus();
     refreshResults();
     setInterval(drawBoxes, 100);
+    setInterval(() => { if (showHeatmap) heatmap.refresh(); }, 1000);
     setInterval(refreshStatus, 1000);
     setInterval(refreshResults, 1000);
 </script>
