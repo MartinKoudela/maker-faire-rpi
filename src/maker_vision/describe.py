@@ -195,14 +195,14 @@ class AutoTrigger:
 
     def _loop(self) -> None:
         seen_ids: set[int] = set()
-        last_frame_id = 0
+        last_detection_id = 0
         last_trigger = float("-inf")
 
         while True:
-            snapshot = self._pipeline.wait_for_new(last_frame_id)
-            last_frame_id = snapshot.frame_id
+            snapshot = self._pipeline.wait_for_detection(last_detection_id)
+            last_detection_id = snapshot.detection_id
             track_ids = snapshot.detections.tracker_id
-            if snapshot.frame is None or track_ids is None:
+            if snapshot.image is None or track_ids is None:
                 continue
 
             new_ids = {int(track_id) for track_id in track_ids} - seen_ids
@@ -214,5 +214,5 @@ class AutoTrigger:
                 continue
             if time.monotonic() - last_trigger < config.AUTO_TRIGGER_COOLDOWN_SECONDS:
                 continue
-            if self._describer.request(snapshot.frame, "auto") is None:
+            if self._describer.request(snapshot.image, "auto") is None:
                 last_trigger = time.monotonic()

@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 from maker_vision import config
-from maker_vision.pipeline import Pipeline, Snapshot
+from maker_vision.pipeline import DetectionSnapshot, Pipeline
 from maker_vision.settings import SettingsStore
 from maker_vision.storage import load_json, save_json
 
@@ -65,16 +65,16 @@ class PeopleCounter:
             self._save()
 
     def _loop(self) -> None:
-        last_frame_id = 0
+        last_detection_id = 0
         while True:
-            snapshot = self._pipeline.wait_for_new(last_frame_id)
-            if snapshot.frame_id == last_frame_id or snapshot.frame is None:
+            snapshot = self._pipeline.wait_for_detection(last_detection_id)
+            if snapshot.detection_id == last_detection_id or snapshot.image is None:
                 continue
-            last_frame_id = snapshot.frame_id
+            last_detection_id = snapshot.detection_id
             self._process(snapshot)
 
-    def _process(self, snapshot: Snapshot) -> None:
-        height, width = snapshot.frame.shape[:2]
+    def _process(self, snapshot: DetectionSnapshot) -> None:
+        height, width = snapshot.image.shape[:2]
         line = self._settings.get().count_line
         track_ids = snapshot.detections.tracker_id
         now = time.monotonic()

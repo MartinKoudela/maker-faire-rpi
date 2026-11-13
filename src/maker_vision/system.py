@@ -77,12 +77,16 @@ class Watchdog:
         started_at = time.monotonic()
         while True:
             time.sleep(2.0)
-            captured_at = self._pipeline.snapshot().captured_at
-            if captured_at == 0.0:
-                if time.monotonic() - started_at > config.WATCHDOG_STARTUP_GRACE_SECONDS:
-                    self._die("no frame since start")
-            elif time.time() - captured_at > config.WATCHDOG_TIMEOUT_SECONDS:
-                self._die(f"no new frame for {time.time() - captured_at:.0f} s")
+            checks = {
+                "frame": self._pipeline.latest_frame().captured_at,
+                "detection": self._pipeline.latest_detection().detected_at,
+            }
+            for name, last in checks.items():
+                if last == 0.0:
+                    if time.monotonic() - started_at > config.WATCHDOG_STARTUP_GRACE_SECONDS:
+                        self._die(f"no {name} since start")
+                elif time.time() - last > config.WATCHDOG_TIMEOUT_SECONDS:
+                    self._die(f"no new {name} for {time.time() - last:.0f} s")
 
     @staticmethod
     def _die(reason: str) -> None:

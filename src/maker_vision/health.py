@@ -35,15 +35,18 @@ class HealthLog:
     def _loop(self) -> None:
         while True:
             time.sleep(config.HEALTH_LOG_SECONDS)
-            snapshot = self._pipeline.snapshot()
+            frame = self._pipeline.latest_frame()
+            stats = self._pipeline.stats()
             system = self._system.snapshot()
             counter = self._counter.snapshot()
             throttled = system.get("throttled") or {}
             entry = {
                 "time": time.strftime("%H:%M:%S"),
                 "uptime_min": round(system["uptime"] / 60),
-                "fps": round(snapshot.fps, 1),
-                "frame_age": round(time.time() - snapshot.captured_at, 1) if snapshot.captured_at else None,
+                "stream_fps": stats["stream_fps"],
+                "detect_fps": stats["detect_fps"],
+                "ms": stats["timings_ms"],
+                "frame_age": round(time.time() - frame.captured_at, 1) if frame.captured_at else None,
                 "temp": system.get("temperature"),
                 "throttled": throttled.get("now", []),
                 "load": system.get("load"),

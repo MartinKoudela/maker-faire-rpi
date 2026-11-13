@@ -111,7 +111,8 @@
 <header>
     <h1>Maker Vision · ovládání</h1>
     <span class="stat">Lidí teď: <b id="people">–</b></span>
-    <span class="stat">FPS: <b id="fps">–</b></span>
+    <span class="stat">Video: <b id="fps">–</b> FPS</span>
+    <span class="stat">Detekce: <b id="detect-fps">–</b> FPS</span>
     <span class="stat">Stáří snímku: <b id="age">–</b></span>
     <span class="stat">CPU: <b id="temp">–</b></span>
     <span class="stat">Zátěž: <b id="load">–</b></span>
@@ -148,6 +149,7 @@
                     <button data-value="true">Zap</button>
                 </div>
             </div>
+            <div class="muted" id="timings">–</div>
         </section>
         <section class="card">
             <h2>Cloud AI</h2>
@@ -348,7 +350,10 @@
         try {
             const { data } = await fetchJson("/api/status");
             document.getElementById("people").textContent = data.people_now;
-            document.getElementById("fps").textContent = data.fps;
+            document.getElementById("fps").textContent = data.stream_fps;
+            document.getElementById("detect-fps").textContent = data.detect_fps;
+            document.getElementById("timings").textContent = Object.entries(data.timings_ms)
+                .map(([name, ms]) => `${name} ${ms} ms`).join(" · ");
             document.getElementById("age").textContent = data.frame_age === null ? "–" : `${data.frame_age} s`;
             renderCloud(data.cloud);
             renderCounter(data.counter);
@@ -444,7 +449,7 @@
     loadSettings();
     refreshStatus();
     refreshResults();
-    setInterval(drawBoxes, 200);
+    setInterval(drawBoxes, 100);
     setInterval(refreshStatus, 1000);
     setInterval(refreshResults, 1000);
 </script>

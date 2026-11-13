@@ -25,6 +25,7 @@ class PicameraSource:
         video_config = self._camera.create_video_configuration(
             main={"size": (config.CAMERA_WIDTH, config.CAMERA_HEIGHT), "format": "RGB888"},
             transform=Transform(hflip=config.CAMERA_ROTATE_180, vflip=config.CAMERA_ROTATE_180),
+            controls={"FrameRate": config.CAMERA_FPS},
         )
         self._camera.configure(video_config)
 

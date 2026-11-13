@@ -25,13 +25,18 @@ def create_app(
     def mjpeg():
         last_frame_id = 0
         min_interval = 1.0 / config.STREAM_MAX_FPS
+        last_sent = 0.0
         while True:
-            snapshot = pipeline.wait_for_new(last_frame_id)
-            if snapshot.jpeg is None or snapshot.frame_id == last_frame_id:
+            frame = pipeline.wait_for_frame(last_frame_id)
+            if frame.jpeg is None or frame.frame_id == last_frame_id:
                 continue
-            last_frame_id = snapshot.frame_id
-            yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + snapshot.jpeg + b"\r\n"
-            time.sleep(min_interval)
+            wait = min_interval - (time.monotonic() - last_sent)
+            if wait > 0:
+                time.sleep(wait)
+                frame = pipeline.latest_frame()
+            last_frame_id = frame.frame_id
+            last_sent = time.monotonic()
+            yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame.jpeg + b"\r\n"
 
     def cloud_state() -> dict:
         current = settings.get()
@@ -57,8 +62,8 @@ def create_app(
 
     @app.route("/api/detections")
     def detections():
-        snapshot = pipeline.snapshot()
-        if snapshot.frame is None:
+        snapshot = pipeline.latest_detection()
+        if snapshot.image is None:
             return jsonify({"frame_width": config.CAMERA_WIDTH, "frame_height": config.CAMERA_HEIGHT, "boxes": []})
 
         tracker_ids = snapshot.detections.tracker_id
@@ -67,19 +72,20 @@ def create_app(
             for xyxy, track_id in zip(snapshot.detections.xyxy, tracker_ids if tracker_ids is not None else [])
         ]
         return jsonify({
-            "frame_width": snapshot.frame.shape[1],
-            "frame_height": snapshot.frame.shape[0],
+            "frame_width": snapshot.image.shape[1],
+            "frame_height": snapshot.image.shape[0],
             "boxes": boxes,
         })
 
     @app.route("/api/status")
     def status():
-        snapshot = pipeline.snapshot()
+        frame = pipeline.latest_frame()
+        detection = pipeline.latest_detection()
         return jsonify({
-            "frame_id": snapshot.frame_id,
-            "fps": round(snapshot.fps, 1),
-            "frame_age": round(time.time() - snapshot.captured_at, 2) if snapshot.captured_at else None,
-            "people_now": len(snapshot.detections),
+            "frame_id": frame.frame_id,
+            **pipeline.stats(),
+            "frame_age": round(time.time() - frame.captured_at, 2) if frame.captured_at else None,
+            "people_now": len(detection.detections),
             "cloud": cloud_state(),
             "counter": counter.snapshot(),
             "system": system.snapshot(),
@@ -118,10 +124,10 @@ def create_app(
 
     @app.route("/api/describe", methods=["POST"])
     def describe():
-        snapshot = pipeline.snapshot()
-        if snapshot.frame is None:
+        frame = pipeline.latest_frame()
+        if frame.image is None:
             return jsonify({"error": "no_frame"}), 503
-        reason = describer.request(snapshot.frame, "manual")
+        reason = describer.request(frame.image, "manual")
         if reason is not None:
             return jsonify({"error": reason}), 409
         return jsonify({"status": "queued"}), 202

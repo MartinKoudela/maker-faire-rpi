@@ -11,6 +11,7 @@ COCO_PERSON_CLASS_ID = 0
 class PersonDetector:
     def __init__(self) -> None:
         self._net = ncnn.Net()
+        self._net.opt.num_threads = config.YOLO_THREADS
         self._net.load_param(str(config.YOLO_MODEL_PATH / "model.ncnn.param"))
         self._net.load_model(str(config.YOLO_MODEL_PATH / "model.ncnn.bin"))
         self._tracker = sv.ByteTrack()
