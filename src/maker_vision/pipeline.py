@@ -180,11 +180,12 @@ class Pipeline:
             if frame.image is None or frame.frame_id == last_frame_id:
                 continue
             last_frame_id = frame.frame_id
-            blur_faces = self._settings.get().blur_faces
+            current = self._settings.get()
+            blur_faces = current.blur_faces
 
             try:
                 started = time.perf_counter()
-                detections = self._detector.detect(frame.image)
+                detections = self._detector.detect(frame.image, pose=current.show_pose)
                 detected = time.perf_counter()
                 faces = self._faces.detect(frame.image) if blur_faces else NO_FACES
                 faced = time.perf_counter()
@@ -193,7 +194,7 @@ class Pipeline:
                 time.sleep(0.5)
                 continue
 
-            self._timings.add("yolo", detected - started)
+            self._timings.add("pose" if current.show_pose else "yolo", detected - started)
             if blur_faces:
                 self._timings.add("faces", faced - detected)
             self._detect_rate.tick()

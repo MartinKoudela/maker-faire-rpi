@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cv2
 import ncnn
 import numpy as np
@@ -6,22 +8,42 @@ import supervision as sv
 from maker_vision import config
 
 COCO_PERSON_CLASS_ID = 0
+POSE_KEYPOINTS = 17
+
+
+def load_net(model_dir: Path) -> ncnn.Net:
+    net = ncnn.Net()
+    net.opt.num_threads = config.YOLO_THREADS
+    net.load_param(str(model_dir / "model.ncnn.param"))
+    net.load_model(str(model_dir / "model.ncnn.bin"))
+    return net
 
 
 class PersonDetector:
     def __init__(self) -> None:
-        self._net = ncnn.Net()
-        self._net.opt.num_threads = config.YOLO_THREADS
-        self._net.load_param(str(config.YOLO_MODEL_PATH / "model.ncnn.param"))
-        self._net.load_model(str(config.YOLO_MODEL_PATH / "model.ncnn.bin"))
+        self._net = load_net(config.YOLO_MODEL_PATH)
+        self._pose_net = load_net(config.POSE_MODEL_PATH)
         self._tracker = sv.ByteTrack()
 
-    def detect(self, frame: np.ndarray) -> sv.Detections:
-        boxes_xyxy, confidences = self._infer(frame)
+    def detect(self, frame: np.ndarray, pose: bool = False) -> sv.Detections:
+        blob, scale = self._preprocess(frame)
+        output = self._run(self._pose_net if pose else self._net, blob)
+        predictions = output.T
+        confidences = predictions[:, 4 + COCO_PERSON_CLASS_ID]
+        keep = confidences >= config.DETECTION_CONFIDENCE
+        predictions, confidences = predictions[keep], confidences[keep]
+
+        data = {}
+        if pose:
+            keypoints = predictions[:, 5:5 + POSE_KEYPOINTS * 3].reshape(-1, POSE_KEYPOINTS, 3).copy()
+            keypoints[:, :, :2] /= scale
+            data["keypoints"] = keypoints.astype(np.float32)
+
         detections = sv.Detections(
-            xyxy=boxes_xyxy,
-            confidence=confidences,
+            xyxy=self._boxes(predictions[:, :4], scale),
+            confidence=confidences.astype(np.float32),
             class_id=np.full(len(confidences), COCO_PERSON_CLASS_ID, dtype=int),
+            data=data,
         )
         detections = detections.with_nms(threshold=config.NMS_IOU_THRESHOLD)
         return self._tracker.update_with_detections(detections)
@@ -29,15 +51,12 @@ class PersonDetector:
     def reset_tracker(self) -> None:
         self._tracker.reset()
 
-    def _infer(self, frame: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        blob, scale = self._preprocess(frame)
-
-        with self._net.create_extractor() as extractor:
+    @staticmethod
+    def _run(net: ncnn.Net, blob: np.ndarray) -> np.ndarray:
+        with net.create_extractor() as extractor:
             extractor.input("in0", ncnn.Mat(blob).clone())
             _, output = extractor.extract("out0")
-            output = np.array(output)
-
-        return self._postprocess(output, scale)
+            return np.array(output)
 
     @staticmethod
     def _preprocess(frame: np.ndarray) -> tuple[np.ndarray, float]:
@@ -62,16 +81,10 @@ class PersonDetector:
         return blob, scale
 
     @staticmethod
-    def _postprocess(output: np.ndarray, scale: float) -> tuple[np.ndarray, np.ndarray]:
-        predictions = output.T
-        confidences = predictions[:, 4 + COCO_PERSON_CLASS_ID]
-
-        keep = confidences >= config.DETECTION_CONFIDENCE
-        boxes_cxcywh, confidences = predictions[keep, :4], confidences[keep]
-
+    def _boxes(boxes_cxcywh: np.ndarray, scale: float) -> np.ndarray:
         cx, cy, w, h = boxes_cxcywh.T
         boxes_xyxy = np.stack(
             [(cx - w / 2) / scale, (cy - h / 2) / scale, (cx + w / 2) / scale, (cy + h / 2) / scale],
             axis=1,
         ).reshape(-1, 4)
-        return boxes_xyxy.astype(np.float32), confidences.astype(np.float32)
+        return boxes_xyxy.astype(np.float32)

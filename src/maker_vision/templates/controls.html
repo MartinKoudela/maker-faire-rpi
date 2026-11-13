@@ -150,6 +150,13 @@
                 </div>
             </div>
             <div class="row">
+                <span>Kostra těla</span>
+                <div class="segmented" id="show-pose">
+                    <button data-value="false">Vyp</button>
+                    <button data-value="true">Zap</button>
+                </div>
+            </div>
+            <div class="row">
                 <span>Heatmapa pohybu</span>
                 <div style="display: flex; gap: 8px;">
                     <div class="segmented" id="show-heatmap">
@@ -245,6 +252,9 @@
         document.getElementById("model").value = settings.model;
         for (const button of document.querySelectorAll("#blur-faces button")) {
             button.classList.toggle("active", button.dataset.value === String(settings.blur_faces));
+        }
+        for (const button of document.querySelectorAll("#show-pose button")) {
+            button.classList.toggle("active", button.dataset.value === String(settings.show_pose));
         }
         for (const button of document.querySelectorAll("#show-heatmap button")) {
             button.classList.toggle("active", button.dataset.value === String(settings.show_heatmap));
@@ -394,6 +404,9 @@
 
     for (const button of document.querySelectorAll("#cloud-mode button")) {
         button.addEventListener("click", () => postSettings({ cloud_mode: button.dataset.value }));
+    }
+    for (const button of document.querySelectorAll("#show-pose button")) {
+        button.addEventListener("click", () => postSettings({ show_pose: button.dataset.value === "true" }));
     }
     for (const button of document.querySelectorAll("#show-heatmap button")) {
         button.addEventListener("click", () => postSettings({ show_heatmap: button.dataset.value === "true" }));

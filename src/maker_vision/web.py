@@ -69,10 +69,13 @@ def create_app(
             return jsonify({"frame_width": config.CAMERA_WIDTH, "frame_height": config.CAMERA_HEIGHT, "boxes": []})
 
         tracker_ids = snapshot.detections.tracker_id
-        boxes = [
-            {"track_id": int(track_id), "xyxy": [round(float(v), 1) for v in xyxy]}
-            for xyxy, track_id in zip(snapshot.detections.xyxy, tracker_ids if tracker_ids is not None else [])
-        ]
+        keypoints = snapshot.detections.data.get("keypoints") if snapshot.detections.data else None
+        boxes = []
+        for index, (xyxy, track_id) in enumerate(zip(snapshot.detections.xyxy, tracker_ids if tracker_ids is not None else [])):
+            box = {"track_id": int(track_id), "xyxy": [round(float(v), 1) for v in xyxy]}
+            if keypoints is not None:
+                box["keypoints"] = [[round(float(x), 1), round(float(y), 1), round(float(c), 2)] for x, y, c in keypoints[index]]
+            boxes.append(box)
         return jsonify({
             "frame_width": snapshot.image.shape[1],
             "frame_height": snapshot.image.shape[0],

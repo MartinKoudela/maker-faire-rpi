@@ -24,6 +24,7 @@ CAMERA_ROTATE_180 = _env_bool("CAMERA_ROTATE_180", False)
 VIDEO_SOURCE = os.environ.get("VIDEO_SOURCE", "").strip() or None
 
 YOLO_MODEL_PATH = MODELS_DIR / "yolo11n_ncnn_model"
+POSE_MODEL_PATH = MODELS_DIR / "yolo11n-pose_ncnn_model"
 YOLO_INPUT_SIZE = int(os.environ.get("YOLO_INPUT_SIZE", "640"))
 YOLO_THREADS = int(os.environ.get("YOLO_THREADS", "4"))
 DETECTION_CONFIDENCE = 0.5

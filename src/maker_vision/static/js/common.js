@@ -22,6 +22,12 @@ export function postJson(url, body) {
     });
 }
 
+const SKELETON = [
+    [5, 7], [7, 9], [6, 8], [8, 10], [5, 6], [5, 11], [6, 12], [11, 12],
+    [11, 13], [13, 15], [12, 14], [14, 16], [0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 6],
+];
+const KEYPOINT_MIN_CONFIDENCE = 0.5;
+
 export class HeatmapLayer {
     constructor() {
         this.image = null;
@@ -68,6 +74,7 @@ export function drawOverlay(canvas, detections, options = {}) {
     ctx.lineWidth = 3 * scale;
     ctx.font = `bold ${Math.round(22 * scale)}px sans-serif`;
     for (const box of detections.boxes) {
+        if (box.keypoints) drawSkeleton(ctx, box.keypoints, scale);
         const [x1, y1, x2, y2] = box.xyxy;
         ctx.strokeStyle = "#2ea043";
         ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
@@ -76,6 +83,30 @@ export function drawOverlay(canvas, detections, options = {}) {
             ctx.fillText(`#${box.track_id}`, x1 + 6 * scale, y1 + 24 * scale);
         }
     }
+}
+
+function drawSkeleton(ctx, keypoints, scale) {
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineWidth = 5 * scale;
+    ctx.strokeStyle = "#58a6ff";
+    for (const [a, b] of SKELETON) {
+        const [ax, ay, ac] = keypoints[a];
+        const [bx, by, bc] = keypoints[b];
+        if (ac < KEYPOINT_MIN_CONFIDENCE || bc < KEYPOINT_MIN_CONFIDENCE) continue;
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        ctx.stroke();
+    }
+    ctx.fillStyle = "#f0f6fc";
+    for (const [x, y, c] of keypoints) {
+        if (c < KEYPOINT_MIN_CONFIDENCE) continue;
+        ctx.beginPath();
+        ctx.arc(x, y, 5 * scale, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
 }
 
 function drawPoint(ctx, canvas, [x, y]) {
