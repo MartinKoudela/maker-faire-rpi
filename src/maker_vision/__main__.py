@@ -1,6 +1,7 @@
 from maker_vision import config
 from maker_vision.counter import PeopleCounter
 from maker_vision.describe import AutoTrigger, Describer
+from maker_vision.health import HealthLog
 from maker_vision.pipeline import Pipeline
 from maker_vision.settings import SettingsStore
 from maker_vision.system import SystemMonitor, Watchdog
@@ -22,6 +23,7 @@ def main() -> None:
     AutoTrigger(pipeline, describer, settings).start()
     system.start()
     Watchdog(pipeline).start()
+    HealthLog(pipeline, system, counter, usage).start()
 
     try:
         create_app(pipeline, settings, usage, describer, counter, system).run(host=config.WEB_HOST, port=config.WEB_PORT, threaded=True)
