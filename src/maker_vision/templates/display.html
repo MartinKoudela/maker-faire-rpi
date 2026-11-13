@@ -5,109 +5,294 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Maker Vision</title>
     <style>
+        :root {
+            --bg: #04070a;
+            --panel: rgba(10, 20, 26, 0.72);
+            --line: rgba(57, 245, 196, 0.18);
+            --line-strong: rgba(57, 245, 196, 0.55);
+            --accent: #39f5c4;
+            --accent-dim: #1f8f74;
+            --amber: #ffb547;
+            --text: #e4f4ef;
+            --muted: #6f8c86;
+            --mono: ui-monospace, "SF Mono", "JetBrains Mono", "DejaVu Sans Mono", Menlo, monospace;
+            --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; overflow: hidden; }
         body {
-            background: #05080c;
-            color: #e6edf3;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background:
+                linear-gradient(rgba(57, 245, 196, 0.035) 1px, transparent 1px) 0 0 / 2.5vw 2.5vw,
+                linear-gradient(90deg, rgba(57, 245, 196, 0.035) 1px, transparent 1px) 0 0 / 2.5vw 2.5vw,
+                radial-gradient(ellipse at 30% 20%, #0b1a1f 0%, var(--bg) 60%);
+            color: var(--text);
+            font-family: var(--sans);
             cursor: none;
             display: grid;
-            grid-template-rows: 1fr auto;
+            grid-template-rows: auto 1fr auto;
         }
-        .stage {
+        .label {
+            font-family: var(--mono);
+            font-size: 0.72vw;
+            letter-spacing: 0.18vw;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        .label b { color: var(--accent); font-weight: 600; }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 1.6vw;
+            padding: 1vw 1.6vw 0.6vw;
+        }
+        .logo {
+            font-family: var(--mono);
+            font-size: 1.7vw;
+            font-weight: 700;
+            letter-spacing: 0.3vw;
+        }
+        .logo span { color: var(--accent); }
+        .tagline { font-size: 1vw; color: var(--muted); }
+        .live {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.6vw;
+            font-family: var(--mono);
+            font-size: 0.9vw;
+            letter-spacing: 0.15vw;
+            color: var(--accent);
+        }
+        .live::before {
+            content: "";
+            width: 0.6vw;
+            height: 0.6vw;
+            border-radius: 50%;
+            background: #ff4d5e;
+            box-shadow: 0 0 0.8vw #ff4d5e;
+            animation: blink 1.6s ease-in-out infinite;
+        }
+        .clock { font-family: var(--mono); font-size: 0.9vw; color: var(--muted); }
+        @keyframes blink { 50% { opacity: 0.25; } }
+
+        main {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 30vw;
-            gap: 1.5vw;
-            padding: 1.5vw;
+            grid-template-columns: minmax(0, 1fr) 29vw;
+            gap: 1.4vw;
+            padding: 0.6vw 1.6vw 1vw;
             min-height: 0;
         }
-        .video {
-            position: relative;
-            border-radius: 1vw;
-            overflow: hidden;
-            background: #000;
-            align-self: center;
+        .left { display: flex; flex-direction: column; gap: 1vw; min-height: 0; }
+        .right { display: flex; flex-direction: column; gap: 1vw; min-height: 0; }
+
+        .frame { position: relative; }
+        .frame::before, .frame::after, .frame > .c3, .frame > .c4 {
+            content: "";
+            position: absolute;
+            width: 1.4vw;
+            height: 1.4vw;
+            border: 2px solid var(--accent);
+            pointer-events: none;
+            z-index: 2;
         }
+        .frame::before { top: -0.5vw; left: -0.5vw; border-right: 0; border-bottom: 0; }
+        .frame::after { top: -0.5vw; right: -0.5vw; border-left: 0; border-bottom: 0; }
+        .frame > .c3 { bottom: -0.5vw; left: -0.5vw; border-right: 0; border-top: 0; }
+        .frame > .c4 { bottom: -0.5vw; right: -0.5vw; border-left: 0; border-top: 0; }
+
+        .video { background: #000; border: 1px solid var(--line); }
         .video img { display: block; width: 100%; }
         .video canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-        aside { display: flex; flex-direction: column; gap: 1.2vw; min-height: 0; }
-        .numbers { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2vw; }
-        .big {
-            background: #0d141c;
-            border: 1px solid #1c2733;
-            border-radius: 1vw;
-            padding: 1.2vw;
+        .video .tag {
+            position: absolute;
+            top: 0.8vw;
+            left: 0.8vw;
+            z-index: 1;
+            font-family: var(--mono);
+            font-size: 0.75vw;
+            letter-spacing: 0.15vw;
+            padding: 0.3vw 0.6vw;
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid var(--line-strong);
+            color: var(--accent);
         }
-        .big b { display: block; font-size: 5vw; line-height: 1; font-variant-numeric: tabular-nums; color: #3fb950; }
-        .big span { color: #8b98a5; font-size: 1.1vw; }
-        .ai {
-            flex: 1;
-            min-height: 0;
-            overflow: hidden;
-            background: #0d141c;
-            border: 1px solid #1c2733;
-            border-radius: 1vw;
-            padding: 1.4vw;
+
+        .below { display: grid; grid-template-columns: 1fr auto; gap: 1.4vw; align-items: stretch; }
+        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8vw; }
+        .step {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            padding: 0.8vw 1vw;
         }
-        .ai h2 { font-size: 1.2vw; text-transform: uppercase; letter-spacing: 0.1vw; color: #8b98a5; margin-bottom: 1vw; }
-        .ai .summary { font-size: 1.9vw; line-height: 1.3; margin-bottom: 1.2vw; }
-        .ai .hint { font-size: 1.6vw; color: #8b98a5; line-height: 1.35; }
-        .ai ul { list-style: none; display: flex; flex-direction: column; gap: 0.7vw; margin-bottom: 1.2vw; }
-        .ai li { font-size: 1.25vw; line-height: 1.35; padding-left: 1.4vw; position: relative; color: #c9d1d9; }
-        .ai li::before { content: "•"; position: absolute; left: 0.2vw; color: #3fb950; }
-        .ai .objects { display: flex; flex-wrap: wrap; gap: 0.5vw; }
-        .ai .objects span {
-            font-size: 1.1vw;
-            background: #1c2733;
-            border-radius: 2vw;
-            padding: 0.3vw 0.9vw;
+        .step .num { font-family: var(--mono); font-size: 0.75vw; color: var(--accent); letter-spacing: 0.15vw; }
+        .step h3 { font-size: 1.05vw; margin: 0.3vw 0 0.2vw; }
+        .step p { font-size: 0.85vw; color: var(--muted); line-height: 1.35; }
+        .step.off { opacity: 0.45; }
+        .tech {
+            display: grid;
+            grid-template-columns: repeat(2, auto);
+            gap: 0.35vw 1.4vw;
+            align-content: center;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            padding: 0.8vw 1.1vw;
+            font-family: var(--mono);
+            font-size: 0.8vw;
         }
-        .thinking { font-size: 1.9vw; color: #58a6ff; animation: pulse 1.2s ease-in-out infinite; }
-        @keyframes pulse { 50% { opacity: 0.35; } }
-        footer {
-            padding: 0.8vw 1.5vw;
-            font-size: 1.1vw;
-            color: #8b98a5;
-            background: #0b0f14;
-            border-top: 1px solid #1c2733;
+        .tech span { color: var(--muted); letter-spacing: 0.1vw; }
+        .tech b { color: var(--text); font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+        .tech b.warn { color: var(--amber); }
+
+        .panel { border: 1px solid var(--line); background: var(--panel); padding: 1vw 1.1vw; }
+        .numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8vw; }
+        .number {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            padding: 0.9vw 1vw;
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
         }
+        .number .label { letter-spacing: 0.1vw; white-space: nowrap; }
+        .number b {
+            display: block;
+            font-family: var(--mono);
+            font-size: 3.4vw;
+            line-height: 1.05;
+            font-weight: 600;
+            color: var(--accent);
+            text-shadow: 0 0 1.4vw rgba(57, 245, 196, 0.35);
+            font-variant-numeric: tabular-nums;
+            margin-top: 0.3vw;
+        }
+        .number.bump b { animation: bump 0.6s ease-out; }
+        @keyframes bump { 0% { color: #fff; transform: scale(1.08); } 100% { color: var(--accent); transform: scale(1); } }
+
+        .ai { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+        .ai .content { margin-top: 0.8vw; flex: 1; min-height: 0; overflow: hidden; }
+        .ai .summary { font-size: 1.45vw; line-height: 1.35; margin-bottom: 0.9vw; }
+        .ai .hint { font-size: 1.2vw; line-height: 1.45; color: var(--muted); }
+        .ai .hint em { color: var(--accent); font-style: normal; }
+        .ai ul { list-style: none; display: flex; flex-direction: column; gap: 0.5vw; margin-bottom: 0.9vw; }
+        .ai li { font-size: 1vw; line-height: 1.4; padding-left: 1.3vw; position: relative; color: #b9d3cc; }
+        .ai li::before { content: "›"; position: absolute; left: 0.2vw; color: var(--accent); font-family: var(--mono); }
+        .ai .objects { display: flex; flex-wrap: wrap; gap: 0.4vw; }
+        .ai .objects span {
+            font-family: var(--mono);
+            font-size: 0.8vw;
+            border: 1px solid var(--line-strong);
+            color: var(--accent);
+            padding: 0.2vw 0.6vw;
+        }
+        .thinking { font-family: var(--mono); font-size: 1.3vw; color: var(--accent); }
+        .thinking::after { content: "▍"; animation: blink 0.8s steps(1) infinite; }
+
+        .chart svg { display: block; width: 100%; height: 6.5vw; margin-top: 0.6vw; overflow: visible; }
+
+        .project { display: grid; grid-template-columns: auto 1fr; gap: 1vw; align-items: center; }
+        .project[hidden] { display: none; }
+        .project img { width: 6.5vw; height: 6.5vw; background: #fff; padding: 0.35vw; display: block; }
+        .project p { font-size: 0.9vw; color: var(--muted); line-height: 1.4; margin-top: 0.3vw; }
+        .project .url { font-family: var(--mono); color: var(--accent); font-size: 0.85vw; word-break: break-all; margin-top: 0.4vw; }
+
+        footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6vw 1.6vw;
+            border-top: 1px solid var(--line);
+            font-family: var(--mono);
+            font-size: 0.8vw;
+            letter-spacing: 0.1vw;
+            color: var(--muted);
+        }
+        footer b { color: var(--accent); font-weight: 500; }
     </style>
 </head>
 <body>
-<div class="stage">
-    <div class="video">
-        <img src="/stream" alt="">
-        <canvas id="overlay"></canvas>
-    </div>
-    <aside>
-        <div class="numbers">
-            <div class="big"><b id="now">0</b><span>lidí právě teď</span></div>
-            <div class="big"><b id="today">0</b><span>lidí dnes u nás</span></div>
+<header>
+    <div class="logo">MAKER<span>//</span>VISION</div>
+    <div class="tagline">Počítačové vidění na Raspberry Pi 5</div>
+    <div class="live">LIVE</div>
+    <div class="clock" id="clock">--:--:--</div>
+</header>
+<main>
+    <section class="left">
+        <div class="frame video">
+            <i class="c3"></i><i class="c4"></i>
+            <div class="tag" id="mode-tag">DETEKCE LIDÍ</div>
+            <img src="/stream" alt="">
+            <canvas id="overlay"></canvas>
         </div>
-        <section class="ai">
-            <h2>Co vidí AI</h2>
-            <div id="ai-content"></div>
+        <div class="below">
+            <div class="steps">
+                <div class="step">
+                    <div class="num">01 · KAMERA</div>
+                    <h3>Vidí 30× za sekundu</h3>
+                    <p>Raspberry Pi Camera Module 3 posílá obraz rovnou do Pi.</p>
+                </div>
+                <div class="step">
+                    <div class="num">02 · LOKÁLNÍ AI</div>
+                    <h3>Najde a sleduje lidi</h3>
+                    <p>Neuronová síť YOLO11 běží přímo na Pi, bez internetu. Každý dostane své číslo.</p>
+                </div>
+                <div class="step" id="step-cloud">
+                    <div class="num">03 · CLOUD AI</div>
+                    <h3>Popíše, co vidí</h3>
+                    <p id="step-cloud-text">Na požádání pošle snímek velkému jazykovému modelu a ten scénu popíše česky.</p>
+                </div>
+            </div>
+            <div class="tech">
+                <span>VIDEO</span><b id="t-video">–</b>
+                <span>DETEKCE</span><b id="t-detect">–</b>
+                <span>MODEL</span><b id="t-model">–</b>
+                <span>CPU</span><b id="t-temp">–</b>
+            </div>
+        </div>
+    </section>
+    <aside class="right">
+        <div class="numbers">
+            <div class="number" id="n-now"><div class="label">Právě teď</div><b>0</b></div>
+            <div class="number" id="n-today"><div class="label">Dnes u stánku</div><b>0</b></div>
+            <div class="number" id="n-passed"><div class="label">Dnes prošlo</div><b>0</b></div>
+        </div>
+        <section class="panel ai">
+            <div class="label"><b>▸</b> Co vidí AI</div>
+            <div class="content" id="ai-content"></div>
+        </section>
+        <section class="panel chart">
+            <div class="label">Lidé u stánku po hodinách</div>
+            <svg id="chart" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+        </section>
+        <section class="panel project" id="project" hidden>
+            <img id="qr" alt="">
+            <div>
+                <div class="label"><b>▸</b> Projekt</div>
+                <p>Naskenuj a podívej se, jak to funguje uvnitř.</p>
+                <div class="url" id="project-url"></div>
+            </div>
         </section>
     </aside>
-</div>
+</main>
 <footer>
-    <span id="privacy">Kamera s AI · nic se neukládá</span>
-    <span>Maker Faire Olomouc</span>
+    <span id="privacy">Kamera s AI · <b>nic se neukládá</b></span>
+    <span>Maker Faire Olomouc 2026</span>
 </footer>
 <script type="module">
     import { HeatmapLayer, drawOverlay, fetchJson } from "/static/js/common.js";
 
     const RESULT_TTL_SECONDS = 120;
-    const HINT = "Kamera v reálném čase hledá lidi a počítá, kolik vás dnes přišlo. Umí taky popsat, co právě vidí.";
+    const CHART_FIRST_HOUR = 9;
+    const CHART_LAST_HOUR = 18;
+    const TYPING_MS_PER_CHAR = 18;
 
     const canvas = document.getElementById("overlay");
     const content = document.getElementById("ai-content");
+    const heatmap = new HeatmapLayer();
     let renderedKey = null;
     let showHeatmap = false;
-    const heatmap = new HeatmapLayer();
+    let showPose = false;
+    let typingTimer = null;
 
     function element(tag, className, text) {
         const node = document.createElement(tag);
@@ -116,24 +301,52 @@
         return node;
     }
 
-    function renderAi(busy, results) {
+    function setNumber(id, value) {
+        const box = document.getElementById(id);
+        const target = box.querySelector("b");
+        const text = String(value);
+        if (target.textContent === text) return;
+        target.textContent = text;
+        box.classList.remove("bump");
+        void box.offsetWidth;
+        box.classList.add("bump");
+    }
+
+    function typeText(node, text) {
+        clearInterval(typingTimer);
+        const started = performance.now();
+        typingTimer = setInterval(() => {
+            const index = Math.floor((performance.now() - started) / TYPING_MS_PER_CHAR);
+            node.textContent = text.slice(0, index);
+            if (index >= text.length) clearInterval(typingTimer);
+        }, 25);
+    }
+
+    function renderAi(cloudMode, busy, results) {
         const latest = results.find((result) => result.status === "ok");
         const fresh = latest && Date.now() / 1000 - latest.ts < RESULT_TTL_SECONDS;
-        const key = busy ? "busy" : fresh ? `result-${latest.id}` : "hint";
+        const key = busy ? "busy" : fresh ? `result-${latest.id}` : `hint-${cloudMode}`;
         if (key === renderedKey) return;
         renderedKey = key;
+        clearInterval(typingTimer);
         content.replaceChildren();
 
         if (busy) {
-            content.appendChild(element("div", "thinking", "Dívám se a přemýšlím…"));
+            content.appendChild(element("div", "thinking", "Dívám se a přemýšlím"));
             return;
         }
         if (!fresh) {
-            content.appendChild(element("div", "hint", HINT));
+            const hint = element("div", "hint");
+            hint.innerHTML = cloudMode === "off"
+                ? "Teď běží jen <em>lokální AI</em> přímo na Raspberry Pi. Hledá lidi, sleduje je a počítá, kolik vás dnes přišlo."
+                : "Kamera v reálném čase hledá lidi a počítá je. Na požádání ti <em>AI popíše</em>, co právě vidí.";
+            content.appendChild(hint);
             return;
         }
 
-        content.appendChild(element("div", "summary", latest.summary));
+        const summary = element("div", "summary");
+        content.appendChild(summary);
+        typeText(summary, latest.summary);
         if (latest.people.length > 0) {
             const list = element("ul");
             for (const person of latest.people) {
@@ -148,6 +361,53 @@
         }
     }
 
+    function renderChart(hourly) {
+        const svg = document.getElementById("chart");
+        const hours = Object.keys(hourly).map(Number);
+        const first = Math.min(CHART_FIRST_HOUR, ...hours);
+        const last = Math.max(CHART_LAST_HOUR, ...hours);
+        const count = last - first + 1;
+        const peak = Math.max(1, ...Object.values(hourly));
+        const currentHour = new Date().getHours();
+        const slot = 300 / count;
+        const parts = [];
+        for (let i = 0; i < count; i++) {
+            const hour = first + i;
+            const value = hourly[String(hour).padStart(2, "0")] ?? 0;
+            const height = (value / peak) * 48;
+            const x = i * slot + slot * 0.18;
+            const width = slot * 0.64;
+            const color = hour === currentHour ? "#39f5c4" : "#1f8f74";
+            parts.push(`<rect x="${x}" y="${57 - height}" width="${width}" height="${Math.max(height, 0.6)}" fill="${color}"/>`);
+            if (value > 0) {
+                parts.push(`<text x="${x + width / 2}" y="${54 - height}" text-anchor="middle" font-size="7" fill="#e4f4ef" font-family="monospace">${value}</text>`);
+            }
+            parts.push(`<text x="${x + width / 2}" y="68" text-anchor="middle" font-size="7" fill="#6f8c86" font-family="monospace">${hour}</text>`);
+        }
+        svg.innerHTML = parts.join("");
+    }
+
+    function renderTech(status) {
+        document.getElementById("t-video").textContent = `${Math.round(status.stream_fps)} FPS`;
+        document.getElementById("t-detect").textContent = `${Math.round(status.detect_fps)} FPS`;
+        document.getElementById("t-model").textContent = showPose ? "YOLO11n-pose" : "YOLO11n";
+        const temp = status.system.temperature;
+        const tempNode = document.getElementById("t-temp");
+        tempNode.textContent = temp == null ? "–" : `${Math.round(temp)} °C`;
+        tempNode.className = temp >= 75 ? "warn" : "";
+    }
+
+    async function loadProject() {
+        try {
+            const { ok, data } = await fetchJson("/api/project");
+            if (!ok || !data.url) return;
+            document.getElementById("qr").src = "/api/project/qr.svg";
+            document.getElementById("project-url").textContent = data.label || data.url;
+            document.getElementById("project").hidden = false;
+        } catch (error) {
+        }
+    }
+
     async function refreshOverlay() {
         try {
             const { data } = await fetchJson("/api/detections");
@@ -159,21 +419,47 @@
     async function refreshInfo() {
         try {
             const [status, describe] = await Promise.all([fetchJson("/api/status"), fetchJson("/api/describe")]);
-            showHeatmap = status.data.cloud.show_heatmap;
+            const cloud = status.data.cloud;
+            const counter = status.data.counter;
+            showHeatmap = cloud.show_heatmap;
+            showPose = cloud.show_pose;
             if (showHeatmap) heatmap.refresh();
-            document.getElementById("now").textContent = status.data.counter.now;
-            document.getElementById("today").textContent = status.data.counter.unique_today;
-            document.getElementById("privacy").textContent = status.data.cloud.cloud_mode === "off"
-                ? "Kamera s lokální AI · nic se neukládá"
-                : "Kamera s AI · nic se neukládá · popis scény zpracovává OpenAI";
-            renderAi(describe.data.busy, describe.data.results);
+
+            setNumber("n-now", counter.now);
+            setNumber("n-today", counter.unique_today);
+            setNumber("n-passed", counter.line_in + counter.line_out);
+            renderChart(counter.hourly);
+            renderTech(status.data);
+
+            const tags = [showPose ? "KOSTRA TĚLA" : "DETEKCE LIDÍ"];
+            if (showHeatmap) tags.push("HEATMAPA");
+            if (cloud.blur_faces) tags.push("ANONYMIZACE");
+            document.getElementById("mode-tag").textContent = tags.join(" · ");
+
+            const cloudOff = cloud.cloud_mode === "off";
+            document.getElementById("step-cloud").classList.toggle("off", cloudOff);
+            document.getElementById("step-cloud-text").textContent = cloudOff
+                ? "Teď vypnuto. Všechno běží jen lokálně na Pi."
+                : "Na požádání pošle snímek velkému jazykovému modelu a ten scénu popíše česky.";
+            document.getElementById("privacy").innerHTML = cloudOff
+                ? "Kamera s lokální AI · <b>nic se neukládá</b>"
+                : "Kamera s AI · <b>nic se neukládá</b> · popis scény zpracovává OpenAI";
+
+            renderAi(cloud.cloud_mode, describe.data.busy, describe.data.results);
         } catch (error) {
         }
     }
 
+    function tickClock() {
+        document.getElementById("clock").textContent = new Date().toLocaleTimeString("cs-CZ");
+    }
+
+    loadProject();
     refreshInfo();
+    tickClock();
     setInterval(refreshOverlay, 100);
     setInterval(refreshInfo, 1000);
+    setInterval(tickClock, 1000);
 </script>
 </body>
 </html>

@@ -67,5 +67,8 @@ STREAM_WIDTH = int(os.environ.get("STREAM_WIDTH", "1280"))
 STREAM_JPEG_QUALITY = int(os.environ.get("STREAM_JPEG_QUALITY", "75"))
 STREAM_MAX_FPS = 30
 
+PROJECT_URL = os.environ.get("PROJECT_URL", "").strip() or None
+PROJECT_LABEL = os.environ.get("PROJECT_LABEL", "").strip() or None
+
 WEB_HOST = "0.0.0.0"
 WEB_PORT = int(os.environ.get("WEB_PORT", "5000"))

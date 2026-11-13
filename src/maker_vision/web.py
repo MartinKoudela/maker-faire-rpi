@@ -1,5 +1,9 @@
+import io
 import time
 from dataclasses import asdict
+from functools import lru_cache
+
+import segno
 
 from flask import Flask, Response, jsonify, render_template, request
 
@@ -104,6 +108,22 @@ def create_app(
     def counter_reset():
         counter.reset()
         return jsonify(counter.snapshot())
+
+    @lru_cache(maxsize=1)
+    def project_qr_svg() -> bytes:
+        buffer = io.BytesIO()
+        segno.make(config.PROJECT_URL, error="m").save(buffer, kind="svg", scale=10, border=1, dark="#04070a")
+        return buffer.getvalue()
+
+    @app.route("/api/project")
+    def project():
+        return jsonify({"url": config.PROJECT_URL, "label": config.PROJECT_LABEL})
+
+    @app.route("/api/project/qr.svg")
+    def project_qr():
+        if config.PROJECT_URL is None:
+            return jsonify({"error": "PROJECT_URL not set"}), 404
+        return Response(project_qr_svg(), mimetype="image/svg+xml")
 
     @app.route("/api/heatmap.png")
     def heatmap_png():
