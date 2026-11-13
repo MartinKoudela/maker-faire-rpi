@@ -3,200 +3,311 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Maker Vision – ovládání</title>
+    <title>Maker Vision · ovládání</title>
+    <link rel="stylesheet" href="/static/css/hud.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0b0f14;
-            color: #e6edf3;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            min-height: 100vh;
+        body { min-height: 100vh; }
+        .mono { font-family: var(--mono); }
+        .label {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
         }
+        .label b { color: var(--accent); font-weight: 600; }
+
         header {
             display: flex;
-            gap: 18px;
             align-items: center;
-            padding: 12px 18px;
-            background: #101720;
-            border-bottom: 1px solid #1c2733;
-            font-size: 14px;
+            flex-wrap: wrap;
+            gap: 10px 22px;
+            padding: 14px 22px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(4, 7, 10, 0.85);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(6px);
         }
-        header h1 { font-size: 15px; font-weight: 600; margin-right: auto; }
-        .stat b { font-variant-numeric: tabular-nums; }
-        .stat b.warn { color: #d29922; }
-        .stat b.hot { color: #f85149; }
-        .throttle { color: #f85149; font-weight: 600; }
+        .logo { font-family: var(--mono); font-size: 18px; font-weight: 700; letter-spacing: 3px; }
+        .logo span { color: var(--accent); }
+        .logo small { color: var(--muted); font-weight: 400; letter-spacing: 2px; font-size: 12px; margin-left: 8px; }
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+        .chip {
+            font-family: var(--mono);
+            font-size: 12px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            padding: 5px 10px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+        .chip b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+        .chip b.warn { color: var(--amber); }
+        .chip b.hot, .chip.alert, .chip.alert b { color: var(--red); }
+        .chip.alert { border-color: rgba(255, 77, 94, 0.5); }
+        .chip[hidden] { display: none; }
+        nav { display: flex; gap: 8px; }
+        nav a {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid var(--line-strong);
+            padding: 5px 10px;
+        }
+        nav a:hover { background: rgba(57, 245, 196, 0.1); }
+
         main {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 360px;
-            gap: 14px;
-            padding: 14px;
-            max-width: 1600px;
+            grid-template-columns: minmax(0, 1fr) 400px;
+            gap: 22px;
+            padding: 22px;
+            max-width: 1700px;
             margin: 0 auto;
+            align-items: start;
         }
-        @media (max-width: 960px) { main { grid-template-columns: 1fr; } }
-        #wrap { position: relative; border-radius: 10px; overflow: hidden; background: #000; align-self: start; }
-        #stream { display: block; width: 100%; }
-        #overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-        #overlay.picking { pointer-events: auto; cursor: crosshair; }
-        .counts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-        .count { background: #0b0f14; border: 1px solid #1c2733; border-radius: 8px; padding: 10px; }
-        .count b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; }
-        .count span { color: #8b98a5; font-size: 12px; }
-        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .actions button {
-            flex: 1;
-            background: #1c2733;
-            color: #e6edf3;
-            border: 1px solid #2a3846;
-            border-radius: 6px;
-            padding: 7px 10px;
+        @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+
+        .left { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 80px; }
+        .video { background: #000; border: 1px solid var(--line); }
+        .video img { display: block; width: 100%; }
+        .video canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        .video canvas.picking { pointer-events: auto; cursor: crosshair; }
+        .video .hint {
+            position: absolute;
+            left: 50%;
+            bottom: 14px;
+            transform: translateX(-50%);
+            z-index: 3;
+            font-family: var(--mono);
             font-size: 13px;
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid var(--amber);
+            color: var(--amber);
+            padding: 6px 12px;
+        }
+        .video .hint[hidden] { display: none; }
+        .timings { font-family: var(--mono); font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 16px; }
+        .timings b { color: var(--text); font-weight: 500; }
+
+        aside { display: flex; flex-direction: column; gap: 14px; }
+        .section { border: 1px solid var(--line); background: var(--panel); }
+        .section > .head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--line);
+        }
+        .section > .body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+        .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; }
+        .row .sub { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+        .switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex: none;
+            border: 1px solid var(--line-strong);
+            background: transparent;
             cursor: pointer;
         }
-        .actions button.active { background: #1f6feb; border-color: #1f6feb; }
-        .actions button.danger { color: #f85149; }
-        aside { display: flex; flex-direction: column; gap: 14px; }
-        .card { background: #101720; border: 1px solid #1c2733; border-radius: 10px; padding: 14px; }
-        .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: #8b98a5; margin-bottom: 12px; }
-        .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; font-size: 14px; }
-        .segmented { display: flex; border: 1px solid #2a3846; border-radius: 8px; overflow: hidden; }
+        .switch::after {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 16px;
+            height: 16px;
+            background: var(--muted);
+            transition: transform 0.15s, background 0.15s;
+        }
+        .switch.on { background: rgba(57, 245, 196, 0.15); }
+        .switch.on::after { transform: translateX(20px); background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+        .segmented { display: flex; border: 1px solid var(--line-strong); }
         .segmented button {
             background: transparent;
-            color: #c9d1d9;
+            color: var(--muted);
             border: 0;
             padding: 6px 12px;
-            font-size: 13px;
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 1px;
             cursor: pointer;
         }
-        .segmented button + button { border-left: 1px solid #2a3846; }
-        .segmented button.active { background: #1f6feb; color: #fff; }
+        .segmented button + button { border-left: 1px solid var(--line-strong); }
+        .segmented button.active { background: var(--accent); color: var(--bg); font-weight: 700; }
+
+        .btn {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--line-strong);
+            padding: 7px 12px;
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        .btn:hover { background: rgba(57, 245, 196, 0.1); }
+        .btn.active { background: var(--amber); border-color: var(--amber); color: var(--bg); }
+        .btn.danger { color: var(--red); border-color: rgba(255, 77, 94, 0.5); }
+        .btn.armed { background: var(--red); color: var(--bg); }
+        .btn-row { display: flex; gap: 8px; }
+        .btn-row .btn { flex: 1; white-space: nowrap; padding: 7px 8px; }
+
         input, select {
-            background: #0b0f14;
-            color: #e6edf3;
-            border: 1px solid #2a3846;
-            border-radius: 6px;
-            padding: 5px 8px;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--line-strong);
+            padding: 6px 8px;
+            font-family: var(--mono);
             font-size: 13px;
         }
-        input[type=number] { width: 90px; }
-        .bar { height: 6px; background: #1c2733; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
-        .bar div { height: 100%; background: #2ea043; width: 0; transition: width 0.3s; }
-        .bar div.warn { background: #d29922; }
-        .bar div.full { background: #f85149; }
-        .muted { color: #8b98a5; font-size: 12px; }
-        .warning { color: #f85149; font-size: 13px; margin-top: 8px; }
+        input[type=number] { width: 100px; text-align: right; }
+
+        .counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .count { border: 1px solid var(--line); padding: 8px 10px; }
+        .count b { display: block; font-family: var(--mono); font-size: 26px; color: var(--accent); font-variant-numeric: tabular-nums; }
+        .count span { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+        .count.small b { font-size: 18px; color: var(--text); }
+
+        .usage { display: flex; flex-direction: column; gap: 6px; }
+        .bar { height: 6px; background: rgba(57, 245, 196, 0.1); overflow: hidden; }
+        .bar div { height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
+        .bar div.warn { background: var(--amber); }
+        .bar div.full { background: var(--red); }
+        .muted { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+        .warning { color: var(--red); font-size: 13px; }
+        .warning:empty { display: none; }
+
         #ask {
             width: 100%;
             padding: 14px;
-            font-size: 18px;
-            font-weight: 600;
-            border: 0;
-            border-radius: 10px;
-            background: #1f6feb;
-            color: #fff;
+            font-family: var(--mono);
+            font-size: 16px;
+            letter-spacing: 2px;
+            font-weight: 700;
+            border: 1px solid var(--accent);
+            background: rgba(57, 245, 196, 0.12);
+            color: var(--accent);
             cursor: pointer;
         }
-        #ask:disabled { background: #2a3846; color: #8b98a5; cursor: not-allowed; }
-        #ask-message { min-height: 18px; margin-top: 8px; }
-        .result { border-top: 1px solid #1c2733; padding-top: 10px; margin-top: 10px; font-size: 14px; }
-        .result:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
-        .result .meta { color: #8b98a5; font-size: 12px; margin-bottom: 4px; }
-        .result .summary { font-size: 15px; margin-bottom: 6px; }
-        .result ul { padding-left: 18px; color: #c9d1d9; }
-        .result .error { color: #f85149; }
+        #ask:hover:not(:disabled) { background: var(--accent); color: var(--bg); }
+        #ask:disabled { border-color: var(--line); color: var(--muted); background: transparent; cursor: not-allowed; }
+        #ask-message { min-height: 16px; }
+
+        .result { border-top: 1px solid var(--line); padding-top: 10px; font-size: 14px; }
+        .result:first-child { border-top: 0; padding-top: 0; }
+        .result .meta { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+        .result .summary { margin-bottom: 6px; line-height: 1.4; }
+        .result ul { list-style: none; color: #b9d3cc; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+        .result li::before { content: "› "; color: var(--accent); font-family: var(--mono); }
+        .result .error { color: var(--red); font-family: var(--mono); font-size: 12px; }
     </style>
 </head>
 <body>
 <header>
-    <h1>Maker Vision · ovládání</h1>
-    <span class="stat">Lidí teď: <b id="people">–</b></span>
-    <span class="stat">Video: <b id="fps">–</b> FPS</span>
-    <span class="stat">Detekce: <b id="detect-fps">–</b> FPS</span>
-    <span class="stat">Stáří snímku: <b id="age">–</b></span>
-    <span class="stat">CPU: <b id="temp">–</b></span>
-    <span class="stat">Zátěž: <b id="load">–</b></span>
-    <span class="stat throttle" id="throttle"></span>
+    <div class="logo">MAKER<span>//</span>VISION<small>OVLÁDÁNÍ</small></div>
+    <div class="chips">
+        <div class="chip">VIDEO <b id="fps">–</b></div>
+        <div class="chip">DETEKCE <b id="detect-fps">–</b></div>
+        <div class="chip">LIDÍ <b id="people">–</b></div>
+        <div class="chip">CPU <b id="temp">–</b></div>
+        <div class="chip">ZÁTĚŽ <b id="load">–</b></div>
+        <div class="chip">SNÍMEK <b id="age">–</b></div>
+        <div class="chip alert" id="throttle" hidden></div>
+    </div>
+    <nav>
+        <a href="/" target="_blank">Monitor ↗</a>
+        <a href="/stream" target="_blank">Stream ↗</a>
+    </nav>
 </header>
 <main>
-    <div id="wrap">
-        <img id="stream" src="/stream" alt="stream">
-        <canvas id="overlay"></canvas>
-    </div>
+    <section class="left">
+        <div class="frame video">
+            <i class="c3"></i><i class="c4"></i>
+            <img src="/stream" alt="stream">
+            <canvas id="overlay"></canvas>
+            <div class="hint" id="line-message" hidden>Klikni do videa na začátek a konec čáry</div>
+        </div>
+        <div class="timings" id="timings"></div>
+    </section>
     <aside>
-        <section class="card">
-            <h2>Počítání lidí</h2>
-            <div class="counts">
-                <div class="count"><b id="count-now">–</b><span>teď v záběru</span></div>
-                <div class="count"><b id="count-unique">–</b><span>dnes celkem</span></div>
-                <div class="count"><b id="count-in">–</b><span>přes čáru A → B</span></div>
-                <div class="count"><b id="count-out">–</b><span>přes čáru B → A</span></div>
-            </div>
-            <div class="muted" id="count-peak" style="margin-bottom: 10px;">–</div>
-            <div class="actions">
-                <button id="line-pick">Nastavit čáru</button>
-                <button id="line-flip">Otočit směr</button>
-                <button id="count-reset" class="danger">Vynulovat</button>
-            </div>
-            <div class="muted" id="line-message" style="margin-top: 8px;"></div>
-        </section>
-        <section class="card">
-            <h2>Video</h2>
-            <div class="row">
-                <span>Rozmazat obličeje</span>
-                <div class="segmented" id="blur-faces">
-                    <button data-value="false">Vyp</button>
-                    <button data-value="true">Zap</button>
+        <section class="section">
+            <div class="head"><span class="label"><b>▸</b> Lokální AI</span><span class="muted">běží na Pi</span></div>
+            <div class="body">
+                <div class="row">
+                    <div>Kostra těla<span class="sub">YOLO11n-pose místo detekce, o kousek pomalejší</span></div>
+                    <button class="switch" data-setting="show_pose"></button>
                 </div>
-            </div>
-            <div class="row">
-                <span>Kostra těla</span>
-                <div class="segmented" id="show-pose">
-                    <button data-value="false">Vyp</button>
-                    <button data-value="true">Zap</button>
+                <div class="row">
+                    <div>Rozmazat obličeje<span class="sub">pixelizace ve videu, popis od AI zůstává ostrý</span></div>
+                    <button class="switch" data-setting="blur_faces"></button>
                 </div>
-            </div>
-            <div class="row">
-                <span>Heatmapa pohybu</span>
-                <div style="display: flex; gap: 8px;">
-                    <div class="segmented" id="show-heatmap">
-                        <button data-value="false">Vyp</button>
-                        <button data-value="true">Zap</button>
+                <div class="row">
+                    <div>Heatmapa pohybu<span class="sub">kudy lidi chodí, bledne s časem</span></div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="btn" id="heatmap-clear">Vymazat</button>
+                        <button class="switch" data-setting="show_heatmap"></button>
                     </div>
-                    <div class="actions"><button id="heatmap-clear">Vymazat</button></div>
                 </div>
             </div>
-            <div class="muted" id="timings">–</div>
         </section>
-        <section class="card">
-            <h2>Cloud AI</h2>
-            <div class="row">
-                <span>Režim</span>
-                <div class="segmented" id="cloud-mode">
-                    <button data-value="off">Vyp</button>
-                    <button data-value="manual">Tlačítko</button>
-                    <button data-value="auto">Auto</button>
+
+        <section class="section">
+            <div class="head"><span class="label"><b>▸</b> Počítání lidí</span><span class="muted" id="count-peak">–</span></div>
+            <div class="body">
+                <div class="counts">
+                    <div class="count"><b id="count-now">–</b><span>teď</span></div>
+                    <div class="count"><b id="count-unique">–</b><span>dnes u stánku</span></div>
+                    <div class="count"><b id="count-passed">–</b><span>dnes prošlo</span></div>
+                    <div class="count small"><b id="count-in">–</b><span>čára A → B</span></div>
+                    <div class="count small"><b id="count-out">–</b><span>čára B → A</span></div>
+                    <div class="count small"><b id="count-peak-num">–</b><span>max naráz</span></div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn" id="line-pick">Nastavit čáru</button>
+                    <button class="btn" id="line-flip">Otočit A/B</button>
+                    <button class="btn danger" id="count-reset">Vynulovat</button>
                 </div>
             </div>
-            <div class="row">
-                <span>Denní strop volání</span>
-                <input type="number" id="daily-limit" min="0" step="10">
-            </div>
-            <div class="row">
-                <span>Model</span>
-                <select id="model"></select>
-            </div>
-            <div class="bar"><div id="usage-bar"></div></div>
-            <div class="muted" id="usage-text">–</div>
-            <div class="warning" id="cloud-warning"></div>
         </section>
-        <section class="card">
-            <button id="ask">Co vidíš?</button>
-            <div class="muted" id="ask-message"></div>
+
+        <section class="section">
+            <div class="head"><span class="label"><b>▸</b> Cloud AI</span><span class="muted">OpenAI</span></div>
+            <div class="body">
+                <div class="row">
+                    <span>Režim</span>
+                    <div class="segmented" id="cloud-mode">
+                        <button data-value="off">VYP</button>
+                        <button data-value="manual">TLAČÍTKO</button>
+                        <button data-value="auto">AUTO</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <span>Denní strop volání</span>
+                    <input type="number" id="daily-limit" min="0" step="10">
+                </div>
+                <div class="row">
+                    <span>Model</span>
+                    <select id="model"></select>
+                </div>
+                <div class="usage">
+                    <div class="bar"><div id="usage-bar"></div></div>
+                    <div class="muted" id="usage-text">–</div>
+                </div>
+                <div class="warning" id="cloud-warning"></div>
+                <button id="ask">CO VIDÍŠ?</button>
+                <div class="muted" id="ask-message"></div>
+            </div>
         </section>
-        <section class="card">
-            <h2>Poslední popisy</h2>
-            <div id="results" class="muted">Zatím nic.</div>
+
+        <section class="section">
+            <div class="head"><span class="label"><b>▸</b> Poslední popisy</span></div>
+            <div class="body" id="results"><span class="muted">Zatím nic.</span></div>
         </section>
     </aside>
 </main>
@@ -204,62 +315,63 @@
     import { HeatmapLayer, REASONS, drawOverlay, fetchJson, postJson } from "/static/js/common.js";
 
     const SOURCES = { manual: "tlačítko", auto: "auto" };
+    const THROTTLE_LABELS = {
+        under_voltage: "podpětí",
+        freq_capped: "omezená frekvence",
+        throttled: "škrcení výkonu",
+        soft_temp_limit: "teplotní limit",
+    };
 
     const canvas = document.getElementById("overlay");
     const askButton = document.getElementById("ask");
     const askMessage = document.getElementById("ask-message");
+    const linePick = document.getElementById("line-pick");
+    const lineMessage = document.getElementById("line-message");
+    const resetButton = document.getElementById("count-reset");
+    const heatmap = new HeatmapLayer();
     let lastResultId = null;
     let countLine = null;
     let pickedPoints = null;
     let resetArmedUntil = 0;
     let showHeatmap = false;
-    const heatmap = new HeatmapLayer();
+
+    function element(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+    }
 
     async function postSettings(changes) {
         const { ok, data } = await postJson("/api/settings", changes);
-        if (!ok) {
-            alertInline(data.error);
-        }
+        if (!ok) document.getElementById("cloud-warning").textContent = data.error;
         await refreshStatus();
-    }
-
-    function alertInline(text) {
-        document.getElementById("cloud-warning").textContent = text || "";
     }
 
     async function loadSettings() {
         const { data } = await fetchJson("/api/settings");
         const select = document.getElementById("model");
-        select.innerHTML = "";
-        for (const model of data.options.model) {
-            const option = document.createElement("option");
+        select.replaceChildren(...data.options.model.map((model) => {
+            const option = element("option", null, model);
             option.value = model;
-            option.textContent = model;
-            select.appendChild(option);
-        }
+            return option;
+        }));
         document.getElementById("daily-limit").max = data.options.max_daily_limit;
         applySettings(data.settings);
     }
 
     function applySettings(settings) {
+        for (const button of document.querySelectorAll(".switch[data-setting]")) {
+            button.classList.toggle("on", settings[button.dataset.setting] === true);
+        }
         for (const button of document.querySelectorAll("#cloud-mode button")) {
             button.classList.toggle("active", button.dataset.value === settings.cloud_mode);
         }
         const limitInput = document.getElementById("daily-limit");
-        if (document.activeElement !== limitInput) {
-            limitInput.value = settings.daily_limit;
-        }
+        if (document.activeElement !== limitInput) limitInput.value = settings.daily_limit;
         document.getElementById("model").value = settings.model;
-        for (const button of document.querySelectorAll("#blur-faces button")) {
-            button.classList.toggle("active", button.dataset.value === String(settings.blur_faces));
-        }
-        for (const button of document.querySelectorAll("#show-pose button")) {
-            button.classList.toggle("active", button.dataset.value === String(settings.show_pose));
-        }
-        for (const button of document.querySelectorAll("#show-heatmap button")) {
-            button.classList.toggle("active", button.dataset.value === String(settings.show_heatmap));
-        }
         showHeatmap = settings.show_heatmap;
+        countLine = settings.count_line;
     }
 
     function renderCloud(cloud) {
@@ -272,65 +384,97 @@
         bar.className = ratio >= 1 ? "full" : ratio >= 0.8 ? "warn" : "";
         const tokens = cloud.usage.input_tokens + cloud.usage.output_tokens;
         document.getElementById("usage-text").textContent =
-            `Dnes ${used} / ${limit} volání · ${tokens.toLocaleString("cs-CZ")} tokenů`;
+            `DNES ${used} / ${limit} VOLÁNÍ · ${tokens.toLocaleString("cs-CZ")} TOKENŮ`;
 
         let warning = "";
         if (!cloud.openai_package) warning = REASONS.missing_openai_package;
         else if (!cloud.api_key) warning = REASONS.missing_api_key;
         else if (used >= limit && cloud.cloud_mode !== "off") warning = REASONS.daily_limit;
-        alertInline(warning);
+        document.getElementById("cloud-warning").textContent = warning;
 
-        const canAsk = cloud.cloud_mode !== "off" && cloud.openai_package && cloud.api_key && used < limit && !cloud.busy;
-        askButton.disabled = !canAsk;
+        askButton.disabled = !(cloud.cloud_mode !== "off" && cloud.openai_package && cloud.api_key && used < limit && !cloud.busy);
         if (cloud.busy) askMessage.textContent = "Přemýšlím…";
         else if (cloud.cloud_mode === "off") askMessage.textContent = REASONS.cloud_off;
-        else if (askMessage.textContent === "Přemýšlím…") askMessage.textContent = "";
+        else if (askMessage.textContent === "Přemýšlím…" || askMessage.textContent === REASONS.cloud_off) askMessage.textContent = "";
     }
 
     function renderResults(results) {
         const container = document.getElementById("results");
-        if (results.length === 0) {
-            container.textContent = "Zatím nic.";
-            return;
-        }
+        if (results.length === 0) return;
         if (results[0].id === lastResultId) return;
         lastResultId = results[0].id;
-        container.innerHTML = "";
-        container.classList.remove("muted");
+        container.replaceChildren();
         for (const result of results) {
-            const item = document.createElement("div");
-            item.className = "result";
-
-            const meta = document.createElement("div");
-            meta.className = "meta";
-            meta.textContent = `${result.time} · ${SOURCES[result.source] || result.source} · ${result.model} · ${result.duration} s`;
-            item.appendChild(meta);
-
+            const item = element("div", "result");
+            item.appendChild(element("div", "meta",
+                `${result.time} · ${SOURCES[result.source] || result.source} · ${result.model} · ${result.duration} s`));
             if (result.status === "ok") {
-                const summary = document.createElement("div");
-                summary.className = "summary";
-                summary.textContent = result.summary;
-                item.appendChild(summary);
-
-                const list = document.createElement("ul");
-                for (const person of result.people) {
-                    const li = document.createElement("li");
-                    li.textContent = `${person.description} – ${person.activity}`;
-                    list.appendChild(li);
-                }
-                if (result.objects.length > 0) {
-                    const li = document.createElement("li");
-                    li.textContent = `Věci: ${result.objects.join(", ")}`;
-                    list.appendChild(li);
-                }
+                item.appendChild(element("div", "summary", result.summary));
+                const list = element("ul");
+                for (const person of result.people) list.appendChild(element("li", null, `${person.description} – ${person.activity}`));
+                if (result.objects.length > 0) list.appendChild(element("li", null, result.objects.join(", ")));
                 item.appendChild(list);
             } else {
-                const error = document.createElement("div");
-                error.className = "error";
-                error.textContent = result.error;
-                item.appendChild(error);
+                item.appendChild(element("div", "error", result.error));
             }
             container.appendChild(item);
+        }
+    }
+
+    function renderSystem(system) {
+        const temp = document.getElementById("temp");
+        temp.textContent = system.temperature == null ? "–" : `${system.temperature} °C`;
+        temp.className = system.temperature >= 80 ? "hot" : system.temperature >= 70 ? "warn" : "";
+        document.getElementById("load").textContent = system.load ?? "–";
+        const now = system.throttled?.now ?? [];
+        const past = system.throttled?.since_boot ?? [];
+        const throttle = document.getElementById("throttle");
+        const flags = now.length > 0 ? now : past;
+        throttle.hidden = flags.length === 0;
+        throttle.textContent = flags.length === 0 ? "" :
+            `${now.length > 0 ? "⚠ " : "OD STARTU: "}${flags.map((flag) => THROTTLE_LABELS[flag]).join(", ")}`;
+    }
+
+    function renderCounter(counter) {
+        document.getElementById("count-now").textContent = counter.now;
+        document.getElementById("count-unique").textContent = counter.unique_today;
+        document.getElementById("count-passed").textContent = counter.line_in + counter.line_out;
+        document.getElementById("count-in").textContent = counter.line_in;
+        document.getElementById("count-out").textContent = counter.line_out;
+        document.getElementById("count-peak-num").textContent = counter.peak_today;
+        document.getElementById("count-peak").textContent = counter.now > 0 ? "● někdo je v záběru" : "nikdo v záběru";
+    }
+
+    function renderTimings(timings) {
+        const container = document.getElementById("timings");
+        container.replaceChildren(...Object.entries(timings).map(([name, ms]) => {
+            const span = element("span", null, `${name.toUpperCase()} `);
+            span.appendChild(element("b", null, `${ms} ms`));
+            return span;
+        }));
+    }
+
+    async function refreshStatus() {
+        try {
+            const { data } = await fetchJson("/api/status");
+            document.getElementById("people").textContent = data.people_now;
+            document.getElementById("fps").textContent = data.stream_fps;
+            document.getElementById("detect-fps").textContent = data.detect_fps;
+            document.getElementById("age").textContent = data.frame_age === null ? "–" : `${data.frame_age} s`;
+            renderTimings(data.timings_ms);
+            renderCloud(data.cloud);
+            renderCounter(data.counter);
+            renderSystem(data.system);
+        } catch (error) {
+            document.getElementById("fps").textContent = "OFFLINE";
+        }
+    }
+
+    async function refreshResults() {
+        try {
+            const { data } = await fetchJson("/api/describe");
+            renderResults(data.results);
+        } catch (error) {
         }
     }
 
@@ -348,76 +492,20 @@
         }
     }
 
-    const THROTTLE_LABELS = {
-        under_voltage: "podpětí",
-        freq_capped: "omezená frekvence",
-        throttled: "škrcení výkonu",
-        soft_temp_limit: "teplotní limit",
-    };
-
-    function renderSystem(system) {
-        const temp = document.getElementById("temp");
-        temp.textContent = system.temperature == null ? "–" : `${system.temperature} °C`;
-        temp.className = system.temperature >= 80 ? "hot" : system.temperature >= 70 ? "warn" : "";
-        document.getElementById("load").textContent = system.load ?? "–";
-        const now = system.throttled?.now ?? [];
-        const past = system.throttled?.since_boot ?? [];
-        const throttle = document.getElementById("throttle");
-        if (now.length > 0) throttle.textContent = `⚠ ${now.map((f) => THROTTLE_LABELS[f]).join(", ")}`;
-        else if (past.length > 0) throttle.textContent = `od startu: ${past.map((f) => THROTTLE_LABELS[f]).join(", ")}`;
-        else throttle.textContent = "";
+    function stopPicking() {
+        pickedPoints = null;
+        canvas.classList.remove("picking");
+        linePick.classList.remove("active");
+        lineMessage.hidden = true;
     }
 
-    function renderCounter(counter) {
-        document.getElementById("count-now").textContent = counter.now;
-        document.getElementById("count-unique").textContent = counter.unique_today;
-        document.getElementById("count-in").textContent = counter.line_in;
-        document.getElementById("count-out").textContent = counter.line_out;
-        document.getElementById("count-peak").textContent = `Nejvíc naráz dnes: ${counter.peak_today}`;
+    for (const button of document.querySelectorAll(".switch[data-setting]")) {
+        button.addEventListener("click", () => {
+            postSettings({ [button.dataset.setting]: !button.classList.contains("on") });
+        });
     }
-
-    async function refreshStatus() {
-        try {
-            const { data } = await fetchJson("/api/status");
-            document.getElementById("people").textContent = data.people_now;
-            document.getElementById("fps").textContent = data.stream_fps;
-            document.getElementById("detect-fps").textContent = data.detect_fps;
-            document.getElementById("timings").textContent = Object.entries(data.timings_ms)
-                .map(([name, ms]) => `${name} ${ms} ms`).join(" · ");
-            document.getElementById("age").textContent = data.frame_age === null ? "–" : `${data.frame_age} s`;
-            renderCloud(data.cloud);
-            renderCounter(data.counter);
-            renderSystem(data.system);
-            countLine = data.cloud.count_line;
-        } catch (error) {
-            document.getElementById("fps").textContent = "offline";
-        }
-    }
-
-    async function refreshResults() {
-        try {
-            const { data } = await fetchJson("/api/describe");
-            renderResults(data.results);
-        } catch (error) {
-        }
-    }
-
     for (const button of document.querySelectorAll("#cloud-mode button")) {
         button.addEventListener("click", () => postSettings({ cloud_mode: button.dataset.value }));
-    }
-    for (const button of document.querySelectorAll("#show-pose button")) {
-        button.addEventListener("click", () => postSettings({ show_pose: button.dataset.value === "true" }));
-    }
-    for (const button of document.querySelectorAll("#show-heatmap button")) {
-        button.addEventListener("click", () => postSettings({ show_heatmap: button.dataset.value === "true" }));
-    }
-    document.getElementById("heatmap-clear").addEventListener("click", async () => {
-        await postJson("/api/heatmap/clear");
-        heatmap.clear();
-        heatmap.refresh();
-    });
-    for (const button of document.querySelectorAll("#blur-faces button")) {
-        button.addEventListener("click", () => postSettings({ blur_faces: button.dataset.value === "true" }));
     }
     document.getElementById("daily-limit").addEventListener("change", (event) => {
         const value = Number.parseInt(event.target.value, 10);
@@ -425,31 +513,29 @@
     });
     document.getElementById("model").addEventListener("change", (event) => postSettings({ model: event.target.value }));
 
+    document.getElementById("heatmap-clear").addEventListener("click", async () => {
+        await postJson("/api/heatmap/clear");
+        heatmap.clear();
+        heatmap.refresh();
+    });
+
     askButton.addEventListener("click", async () => {
         askButton.disabled = true;
         askMessage.textContent = "Přemýšlím…";
         const { ok, data } = await postJson("/api/describe");
-        if (!ok) {
-            askMessage.textContent = REASONS[data.error] || data.error;
-        }
+        if (!ok) askMessage.textContent = REASONS[data.error] || data.error;
         await refreshStatus();
     });
 
-    const linePick = document.getElementById("line-pick");
-    const lineMessage = document.getElementById("line-message");
-
     linePick.addEventListener("click", () => {
         if (pickedPoints) {
-            pickedPoints = null;
-            canvas.classList.remove("picking");
-            linePick.classList.remove("active");
-            lineMessage.textContent = "";
+            stopPicking();
             return;
         }
         pickedPoints = [];
         canvas.classList.add("picking");
         linePick.classList.add("active");
-        lineMessage.textContent = "Klikni do videa na začátek a konec čáry.";
+        lineMessage.hidden = false;
     });
 
     canvas.addEventListener("click", async (event) => {
@@ -460,10 +546,7 @@
         pickedPoints.push([x, y]);
         if (pickedPoints.length < 2) return;
         const line = [...pickedPoints[0], ...pickedPoints[1]];
-        pickedPoints = null;
-        canvas.classList.remove("picking");
-        linePick.classList.remove("active");
-        lineMessage.textContent = "";
+        stopPicking();
         await postSettings({ count_line: line });
     });
 
@@ -473,16 +556,20 @@
         await postSettings({ count_line: [x2, y2, x1, y1] });
     });
 
-    const resetButton = document.getElementById("count-reset");
     resetButton.addEventListener("click", async () => {
         if (Date.now() > resetArmedUntil) {
             resetArmedUntil = Date.now() + 3000;
             resetButton.textContent = "Opravdu?";
-            setTimeout(() => { resetButton.textContent = "Vynulovat"; }, 3000);
+            resetButton.classList.add("armed");
+            setTimeout(() => {
+                resetButton.textContent = "Vynulovat";
+                resetButton.classList.remove("armed");
+            }, 3000);
             return;
         }
         resetArmedUntil = 0;
         resetButton.textContent = "Vynulovat";
+        resetButton.classList.remove("armed");
         await postJson("/api/counter/reset");
         await refreshStatus();
     });
