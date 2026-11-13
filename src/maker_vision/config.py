@@ -20,6 +20,7 @@ def _env_bool(name: str, default: bool) -> bool:
 CAMERA_WIDTH = 1280
 CAMERA_HEIGHT = 720
 CAMERA_ROTATE_180 = _env_bool("CAMERA_ROTATE_180", False)
+VIDEO_SOURCE = os.environ.get("VIDEO_SOURCE", "").strip() or None
 
 YOLO_MODEL_PATH = MODELS_DIR / "yolo11n_ncnn_model"
 YOLO_INPUT_SIZE = 640

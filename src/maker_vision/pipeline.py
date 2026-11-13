@@ -8,7 +8,7 @@ import numpy as np
 import supervision as sv
 
 from maker_vision import config
-from maker_vision.capture import create_camera, read_frame
+from maker_vision.capture import create_source
 from maker_vision.detection import PersonDetector
 
 
@@ -34,7 +34,7 @@ EMPTY_SNAPSHOT = Snapshot(
 
 class Pipeline:
     def __init__(self) -> None:
-        self._camera = create_camera()
+        self._source = create_source()
         self._detector = PersonDetector()
         self._condition = threading.Condition()
         self._snapshot = EMPTY_SNAPSHOT
@@ -42,7 +42,7 @@ class Pipeline:
         self._thread: threading.Thread | None = None
 
     def start(self) -> None:
-        self._camera.start()
+        self._source.start()
         self._running = True
         self._thread = threading.Thread(target=self._loop, daemon=True, name="pipeline")
         self._thread.start()
@@ -51,7 +51,7 @@ class Pipeline:
         self._running = False
         if self._thread is not None:
             self._thread.join(timeout=2.0)
-        self._camera.stop()
+        self._source.stop()
 
     def snapshot(self) -> Snapshot:
         with self._condition:
@@ -68,7 +68,7 @@ class Pipeline:
 
         while self._running:
             try:
-                frame = read_frame(self._camera)
+                frame = self._source.read()
                 detections = self._detector.detect(frame)
                 ok, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, config.STREAM_JPEG_QUALITY])
             except Exception:
