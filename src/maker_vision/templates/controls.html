@@ -23,6 +23,9 @@
         }
         header h1 { font-size: 15px; font-weight: 600; margin-right: auto; }
         .stat b { font-variant-numeric: tabular-nums; }
+        .stat b.warn { color: #d29922; }
+        .stat b.hot { color: #f85149; }
+        .throttle { color: #f85149; font-weight: 600; }
         main {
             display: grid;
             grid-template-columns: minmax(0, 1fr) 360px;
@@ -110,6 +113,9 @@
     <span class="stat">Lidí teď: <b id="people">–</b></span>
     <span class="stat">FPS: <b id="fps">–</b></span>
     <span class="stat">Stáří snímku: <b id="age">–</b></span>
+    <span class="stat">CPU: <b id="temp">–</b></span>
+    <span class="stat">Zátěž: <b id="load">–</b></span>
+    <span class="stat throttle" id="throttle"></span>
 </header>
 <main>
     <div id="wrap">
@@ -297,6 +303,26 @@
         }
     }
 
+    const THROTTLE_LABELS = {
+        under_voltage: "podpětí",
+        freq_capped: "omezená frekvence",
+        throttled: "škrcení výkonu",
+        soft_temp_limit: "teplotní limit",
+    };
+
+    function renderSystem(system) {
+        const temp = document.getElementById("temp");
+        temp.textContent = system.temperature == null ? "–" : `${system.temperature} °C`;
+        temp.className = system.temperature >= 80 ? "hot" : system.temperature >= 70 ? "warn" : "";
+        document.getElementById("load").textContent = system.load ?? "–";
+        const now = system.throttled?.now ?? [];
+        const past = system.throttled?.since_boot ?? [];
+        const throttle = document.getElementById("throttle");
+        if (now.length > 0) throttle.textContent = `⚠ ${now.map((f) => THROTTLE_LABELS[f]).join(", ")}`;
+        else if (past.length > 0) throttle.textContent = `od startu: ${past.map((f) => THROTTLE_LABELS[f]).join(", ")}`;
+        else throttle.textContent = "";
+    }
+
     function renderCounter(counter) {
         document.getElementById("count-now").textContent = counter.now;
         document.getElementById("count-unique").textContent = counter.unique_today;
@@ -313,6 +339,7 @@
             document.getElementById("age").textContent = data.frame_age === null ? "–" : `${data.frame_age} s`;
             renderCloud(data.cloud);
             renderCounter(data.counter);
+            renderSystem(data.system);
             countLine = data.cloud.count_line;
         } catch (error) {
             document.getElementById("fps").textContent = "offline";
