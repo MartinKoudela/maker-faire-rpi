@@ -4,278 +4,221 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Maker Vision</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
     <style>
-        :root {
-            --bg: #04070a;
-            --panel: rgba(10, 20, 26, 0.72);
-            --line: rgba(57, 245, 196, 0.18);
-            --line-strong: rgba(57, 245, 196, 0.55);
-            --accent: #39f5c4;
-            --accent-dim: #1f8f74;
-            --amber: #ffb547;
-            --text: #e4f4ef;
-            --muted: #6f8c86;
-            --mono: ui-monospace, "SF Mono", "JetBrains Mono", "DejaVu Sans Mono", Menlo, monospace;
-            --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; overflow: hidden; }
+        html { font-size: 0.8333vw; height: 100%; overflow: hidden; }
         body {
-            background:
-                linear-gradient(rgba(57, 245, 196, 0.035) 1px, transparent 1px) 0 0 / 2.5vw 2.5vw,
-                linear-gradient(90deg, rgba(57, 245, 196, 0.035) 1px, transparent 1px) 0 0 / 2.5vw 2.5vw,
-                radial-gradient(ellipse at 30% 20%, #0b1a1f 0%, var(--bg) 60%);
-            color: var(--text);
-            font-family: var(--sans);
+            height: 100%;
+            overflow: hidden;
             cursor: none;
             display: grid;
             grid-template-rows: auto 1fr auto;
         }
-        .label {
-            font-family: var(--mono);
-            font-size: 0.72vw;
-            letter-spacing: 0.18vw;
-            text-transform: uppercase;
-            color: var(--muted);
-        }
-        .label b { color: var(--accent); font-weight: 600; }
 
         header {
             display: flex;
             align-items: center;
-            gap: 1.6vw;
-            padding: 1vw 1.6vw 0.6vw;
+            gap: 1.25rem;
+            padding: 1.5rem 2rem 1rem;
         }
-        .logo {
-            font-family: var(--mono);
-            font-size: 1.7vw;
-            font-weight: 700;
-            letter-spacing: 0.3vw;
-        }
-        .logo span { color: var(--accent); }
-        .tagline { font-size: 1vw; color: var(--muted); }
-        .live {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 0.6vw;
-            font-family: var(--mono);
-            font-size: 0.9vw;
-            letter-spacing: 0.15vw;
-            color: var(--accent);
-        }
-        .live::before {
-            content: "";
-            width: 0.6vw;
-            height: 0.6vw;
-            border-radius: 50%;
-            background: #ff4d5e;
-            box-shadow: 0 0 0.8vw #ff4d5e;
-            animation: blink 1.6s ease-in-out infinite;
-        }
-        .clock { font-family: var(--mono); font-size: 0.9vw; color: var(--muted); }
-        @keyframes blink { 50% { opacity: 0.25; } }
+        .brand { display: flex; align-items: baseline; gap: 1rem; }
+        .brand h1 { font-size: 1.6rem; font-weight: 650; letter-spacing: -0.02em; }
+        .brand span { font-size: 1.05rem; color: var(--muted); }
+        header .right { margin-left: auto; display: flex; align-items: center; gap: 1.5rem; }
+        .clock { font-size: 1rem; color: var(--muted); }
 
         main {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 29vw;
-            gap: 1.4vw;
-            padding: 0.6vw 1.6vw 1vw;
+            grid-template-columns: minmax(0, 1fr) 34rem;
+            gap: 1.5rem;
+            padding: 0 2rem 1.5rem;
             min-height: 0;
         }
-        .left { display: flex; flex-direction: column; gap: 1vw; min-height: 0; }
-        .right { display: flex; flex-direction: column; gap: 1vw; min-height: 0; }
+        .left, .right-col { display: flex; flex-direction: column; gap: 1.25rem; min-height: 0; }
 
-        .frame { position: relative; }
-        .frame::before, .frame::after, .frame > .c3, .frame > .c4 {
-            content: "";
+        .mode {
             position: absolute;
-            width: 1.4vw;
-            height: 1.4vw;
-            border: 2px solid var(--accent);
-            pointer-events: none;
-            z-index: 2;
-        }
-        .frame::before { top: -0.5vw; left: -0.5vw; border-right: 0; border-bottom: 0; }
-        .frame::after { top: -0.5vw; right: -0.5vw; border-left: 0; border-bottom: 0; }
-        .frame > .c3 { bottom: -0.5vw; left: -0.5vw; border-right: 0; border-top: 0; }
-        .frame > .c4 { bottom: -0.5vw; right: -0.5vw; border-left: 0; border-top: 0; }
-
-        .video { background: #000; border: 1px solid var(--line); }
-        .video img { display: block; width: 100%; }
-        .video canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-        .video .tag {
-            position: absolute;
-            top: 0.8vw;
-            left: 0.8vw;
+            top: 1rem;
+            left: 1rem;
             z-index: 1;
-            font-family: var(--mono);
-            font-size: 0.75vw;
-            letter-spacing: 0.15vw;
-            padding: 0.3vw 0.6vw;
-            background: rgba(0, 0, 0, 0.55);
-            border: 1px solid var(--line-strong);
-            color: var(--accent);
+            display: flex;
+            gap: 0.4rem;
+        }
+        .mode span {
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 0.3rem 0.65rem;
+            border-radius: 999px;
+            background: rgba(12, 12, 14, 0.72);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-2);
         }
 
-        .below { display: grid; grid-template-columns: 1fr auto; gap: 1.4vw; align-items: stretch; }
-        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8vw; }
-        .step {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            padding: 0.8vw 1vw;
+        .below { display: grid; grid-template-columns: 1fr 15rem; gap: 1.25rem; }
+        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+        .step { padding: 1.1rem 1.25rem; }
+        .step .index {
+            display: inline-grid;
+            place-items: center;
+            width: 1.6rem;
+            height: 1.6rem;
+            border-radius: 50%;
+            background: var(--surface-2);
+            border: 1px solid var(--border-strong);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-2);
+            margin-bottom: 0.7rem;
         }
-        .step .num { font-family: var(--mono); font-size: 0.75vw; color: var(--accent); letter-spacing: 0.15vw; }
-        .step h3 { font-size: 1.05vw; margin: 0.3vw 0 0.2vw; }
-        .step p { font-size: 0.85vw; color: var(--muted); line-height: 1.35; }
-        .step.off { opacity: 0.45; }
-        .tech {
-            display: grid;
-            grid-template-columns: repeat(2, auto);
-            gap: 0.35vw 1.4vw;
-            align-content: center;
-            border: 1px solid var(--line);
-            background: var(--panel);
-            padding: 0.8vw 1.1vw;
-            font-family: var(--mono);
-            font-size: 0.8vw;
-        }
-        .tech span { color: var(--muted); letter-spacing: 0.1vw; }
-        .tech b { color: var(--text); font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+        .step h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.35rem; }
+        .step p { font-size: 0.9rem; line-height: 1.45; color: var(--muted); }
+        .step.off { opacity: 0.5; }
+
+        .tech { padding: 1.1rem 1.25rem; display: flex; flex-direction: column; justify-content: center; gap: 0.6rem; }
+        .tech div { display: flex; justify-content: space-between; font-size: 0.9rem; }
+        .tech span { color: var(--muted); }
+        .tech b { font-weight: 500; font-family: var(--mono); font-size: 0.85rem; }
         .tech b.warn { color: var(--amber); }
 
-        .panel { border: 1px solid var(--line); background: var(--panel); padding: 1vw 1.1vw; }
-        .numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8vw; }
-        .number {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            padding: 0.9vw 1vw;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .number .label { letter-spacing: 0.1vw; white-space: nowrap; }
+        .numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .number { padding: 1.1rem 1.25rem; }
         .number b {
             display: block;
-            font-family: var(--mono);
-            font-size: 3.4vw;
-            line-height: 1.05;
-            font-weight: 600;
-            color: var(--accent);
-            text-shadow: 0 0 1.4vw rgba(57, 245, 196, 0.35);
-            font-variant-numeric: tabular-nums;
-            margin-top: 0.3vw;
+            font-size: 3.4rem;
+            font-weight: 650;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-top: 0.35rem;
         }
-        .number.bump b { animation: bump 0.6s ease-out; }
-        @keyframes bump { 0% { color: #fff; transform: scale(1.08); } 100% { color: var(--accent); transform: scale(1); } }
+        .number:first-child b { color: var(--accent); }
 
+        .panel { padding: 1.25rem 1.4rem; }
         .ai { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-        .ai .content { margin-top: 0.8vw; flex: 1; min-height: 0; overflow: hidden; }
-        .ai .summary { font-size: 1.45vw; line-height: 1.35; margin-bottom: 0.9vw; }
-        .ai .hint { font-size: 1.2vw; line-height: 1.45; color: var(--muted); }
-        .ai .hint em { color: var(--accent); font-style: normal; }
-        .ai ul { list-style: none; display: flex; flex-direction: column; gap: 0.5vw; margin-bottom: 0.9vw; }
-        .ai li { font-size: 1vw; line-height: 1.4; padding-left: 1.3vw; position: relative; color: #b9d3cc; }
-        .ai li::before { content: "›"; position: absolute; left: 0.2vw; color: var(--accent); font-family: var(--mono); }
-        .ai .objects { display: flex; flex-wrap: wrap; gap: 0.4vw; }
-        .ai .objects span {
-            font-family: var(--mono);
-            font-size: 0.8vw;
-            border: 1px solid var(--line-strong);
-            color: var(--accent);
-            padding: 0.2vw 0.6vw;
+        .ai .head { display: flex; justify-content: space-between; align-items: center; }
+        .ai .content { margin-top: 1rem; flex: 1; min-height: 0; overflow: hidden; }
+        .ai .summary { font-size: 1.5rem; line-height: 1.4; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 1.1rem; }
+        .ai .hint { font-size: 1.15rem; line-height: 1.55; color: var(--text-2); }
+        .ai ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.1rem; }
+        .ai li {
+            font-size: 1rem;
+            line-height: 1.45;
+            color: var(--text-2);
+            padding-left: 1rem;
+            border-left: 2px solid var(--border-strong);
         }
-        .thinking { font-family: var(--mono); font-size: 1.3vw; color: var(--accent); }
-        .thinking::after { content: "▍"; animation: blink 0.8s steps(1) infinite; }
+        .ai .objects { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+        .ai .objects span {
+            font-size: 0.85rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: 999px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+        }
+        .thinking { display: flex; align-items: center; gap: 0.8rem; font-size: 1.15rem; color: var(--text-2); }
+        .spinner {
+            width: 1.2rem;
+            height: 1.2rem;
+            border-radius: 50%;
+            border: 2px solid var(--border-strong);
+            border-top-color: var(--accent);
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .chart svg { display: block; width: 100%; height: 6.5vw; margin-top: 0.6vw; overflow: visible; }
+        .chart svg { display: block; width: 100%; height: 6.5rem; margin-top: 0.9rem; overflow: visible; }
 
-        .project { display: grid; grid-template-columns: auto 1fr; gap: 1vw; align-items: center; }
+        .project { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: center; }
         .project[hidden] { display: none; }
-        .project img { width: 6.5vw; height: 6.5vw; background: #fff; padding: 0.35vw; display: block; }
-        .project p { font-size: 0.9vw; color: var(--muted); line-height: 1.4; margin-top: 0.3vw; }
-        .project .url { font-family: var(--mono); color: var(--accent); font-size: 0.85vw; word-break: break-all; margin-top: 0.4vw; }
+        .project img { width: 6.5rem; height: 6.5rem; background: #fff; border-radius: 0.5rem; padding: 0.35rem; display: block; }
+        .project h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .project p { font-size: 0.9rem; color: var(--muted); line-height: 1.45; }
+        .project .url { font-size: 0.85rem; color: var(--accent); word-break: break-all; margin-top: 0.4rem; }
 
         footer {
             display: flex;
             justify-content: space-between;
-            padding: 0.6vw 1.6vw;
-            border-top: 1px solid var(--line);
-            font-family: var(--mono);
-            font-size: 0.8vw;
-            letter-spacing: 0.1vw;
+            padding: 0.9rem 2rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
             color: var(--muted);
         }
-        footer b { color: var(--accent); font-weight: 500; }
     </style>
 </head>
 <body>
 <header>
-    <div class="logo">MAKER<span>//</span>VISION</div>
-    <div class="tagline">Počítačové vidění na Raspberry Pi 5</div>
-    <div class="live">LIVE</div>
-    <div class="clock" id="clock">--:--:--</div>
+    <div class="brand">
+        <h1>Maker Vision</h1>
+        <span>Počítačové vidění na Raspberry Pi 5</span>
+    </div>
+    <div class="right">
+        <span class="status">Živě</span>
+        <span class="clock" id="clock">--:--</span>
+    </div>
 </header>
 <main>
     <section class="left">
-        <div class="frame video">
-            <i class="c3"></i><i class="c4"></i>
-            <div class="tag" id="mode-tag">DETEKCE LIDÍ</div>
+        <div class="video">
+            <div class="mode" id="mode"></div>
             <img src="/stream" alt="">
             <canvas id="overlay"></canvas>
         </div>
         <div class="below">
             <div class="steps">
-                <div class="step">
-                    <div class="num">01 · KAMERA</div>
-                    <h3>Vidí 30× za sekundu</h3>
-                    <p>Raspberry Pi Camera Module 3 posílá obraz rovnou do Pi.</p>
+                <div class="card step">
+                    <div class="index">1</div>
+                    <h3>Snímá prostor před stánkem</h3>
+                    <p>Raspberry Pi Camera Module 3 posílá živý obraz přímo do Raspberry Pi.</p>
                 </div>
-                <div class="step">
-                    <div class="num">02 · LOKÁLNÍ AI</div>
-                    <h3>Najde a sleduje lidi</h3>
-                    <p>Neuronová síť YOLO11 běží přímo na Pi, bez internetu. Každý dostane své číslo.</p>
+                <div class="card step">
+                    <div class="index">2</div>
+                    <h3>Rozpozná a sleduje lidi</h3>
+                    <p>Neuronová síť YOLO11 běží lokálně na Raspberry Pi, bez připojení k internetu.</p>
                 </div>
-                <div class="step" id="step-cloud">
-                    <div class="num">03 · CLOUD AI</div>
+                <div class="card step" id="step-cloud">
+                    <div class="index">3</div>
                     <h3>Popíše, co vidí</h3>
-                    <p id="step-cloud-text">Na požádání pošle snímek velkému jazykovému modelu a ten scénu popíše česky.</p>
+                    <p id="step-cloud-text">Na vyžádání odešle snímek jazykovému modelu, který scénu popíše česky.</p>
                 </div>
             </div>
-            <div class="tech">
-                <span>VIDEO</span><b id="t-video">–</b>
-                <span>DETEKCE</span><b id="t-detect">–</b>
-                <span>MODEL</span><b id="t-model">–</b>
-                <span>CPU</span><b id="t-temp">–</b>
+            <div class="card tech">
+                <div><span>Video</span><b id="t-video">–</b></div>
+                <div><span>Detekce</span><b id="t-detect">–</b></div>
+                <div><span>Model</span><b id="t-model">–</b></div>
+                <div><span>Teplota CPU</span><b id="t-temp">–</b></div>
             </div>
         </div>
     </section>
-    <aside class="right">
+    <aside class="right-col">
         <div class="numbers">
-            <div class="number" id="n-now"><div class="label">Právě teď</div><b>0</b></div>
-            <div class="number" id="n-today"><div class="label">Dnes u stánku</div><b>0</b></div>
-            <div class="number" id="n-passed"><div class="label">Dnes prošlo</div><b>0</b></div>
+            <div class="card number" id="n-now"><div class="caption">Právě teď</div><b>0</b></div>
+            <div class="card number" id="n-today"><div class="caption">Dnes u stánku</div><b>0</b></div>
+            <div class="card number" id="n-passed"><div class="caption">Dnes prošlo</div><b>0</b></div>
         </div>
-        <section class="panel ai">
-            <div class="label"><b>▸</b> Co vidí AI</div>
+        <section class="card panel ai">
+            <div class="head">
+                <div class="caption">Co vidí AI</div>
+                <div class="caption" id="ai-time"></div>
+            </div>
             <div class="content" id="ai-content"></div>
         </section>
-        <section class="panel chart">
-            <div class="label">Lidé u stánku po hodinách</div>
+        <section class="card panel chart">
+            <div class="caption">Návštěvníci po hodinách</div>
             <svg id="chart" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
         </section>
-        <section class="panel project" id="project" hidden>
+        <section class="card panel project" id="project" hidden>
             <img id="qr" alt="">
             <div>
-                <div class="label"><b>▸</b> Projekt</div>
-                <p>Naskenuj a podívej se, jak to funguje uvnitř.</p>
+                <h3>Celý projekt</h3>
+                <p>Naskenujte kód a podívejte se, jak to funguje uvnitř.</p>
                 <div class="url" id="project-url"></div>
             </div>
         </section>
     </aside>
 </main>
 <footer>
-    <span id="privacy">Kamera s AI · <b>nic se neukládá</b></span>
+    <span id="privacy">Žádné záznamy se neukládají.</span>
     <span>Maker Faire Olomouc 2026</span>
 </footer>
 <script type="module">
@@ -284,7 +227,6 @@
     const RESULT_TTL_SECONDS = 120;
     const CHART_FIRST_HOUR = 9;
     const CHART_LAST_HOUR = 18;
-    const TYPING_MS_PER_CHAR = 18;
 
     const canvas = document.getElementById("overlay");
     const content = document.getElementById("ai-content");
@@ -292,7 +234,6 @@
     let renderedKey = null;
     let showHeatmap = false;
     let showPose = false;
-    let typingTimer = null;
 
     function element(tag, className, text) {
         const node = document.createElement(tag);
@@ -302,24 +243,7 @@
     }
 
     function setNumber(id, value) {
-        const box = document.getElementById(id);
-        const target = box.querySelector("b");
-        const text = String(value);
-        if (target.textContent === text) return;
-        target.textContent = text;
-        box.classList.remove("bump");
-        void box.offsetWidth;
-        box.classList.add("bump");
-    }
-
-    function typeText(node, text) {
-        clearInterval(typingTimer);
-        const started = performance.now();
-        typingTimer = setInterval(() => {
-            const index = Math.floor((performance.now() - started) / TYPING_MS_PER_CHAR);
-            node.textContent = text.slice(0, index);
-            if (index >= text.length) clearInterval(typingTimer);
-        }, 25);
+        document.querySelector(`#${id} b`).textContent = String(value);
     }
 
     function renderAi(cloudMode, busy, results) {
@@ -328,25 +252,26 @@
         const key = busy ? "busy" : fresh ? `result-${latest.id}` : `hint-${cloudMode}`;
         if (key === renderedKey) return;
         renderedKey = key;
-        clearInterval(typingTimer);
         content.replaceChildren();
+        content.classList.remove("fade-in");
+        void content.offsetWidth;
+        content.classList.add("fade-in");
+        document.getElementById("ai-time").textContent = fresh && !busy ? latest.time.slice(0, 5) : "";
 
         if (busy) {
-            content.appendChild(element("div", "thinking", "Dívám se a přemýšlím"));
+            const thinking = element("div", "thinking");
+            thinking.append(element("div", "spinner"), element("span", null, "Analyzuji snímek…"));
+            content.appendChild(thinking);
             return;
         }
         if (!fresh) {
-            const hint = element("div", "hint");
-            hint.innerHTML = cloudMode === "off"
-                ? "Teď běží jen <em>lokální AI</em> přímo na Raspberry Pi. Hledá lidi, sleduje je a počítá, kolik vás dnes přišlo."
-                : "Kamera v reálném čase hledá lidi a počítá je. Na požádání ti <em>AI popíše</em>, co právě vidí.";
-            content.appendChild(hint);
+            content.appendChild(element("div", "hint", cloudMode === "off"
+                ? "Právě běží pouze lokální AI přímo na Raspberry Pi. Rozpoznává lidi, sleduje je a počítá návštěvníky."
+                : "Kamera v reálném čase rozpoznává a počítá lidi. Na vyžádání AI popíše, co právě vidí."));
             return;
         }
 
-        const summary = element("div", "summary");
-        content.appendChild(summary);
-        typeText(summary, latest.summary);
+        content.appendChild(element("div", "summary", latest.summary));
         if (latest.people.length > 0) {
             const list = element("ul");
             for (const person of latest.people) {
@@ -374,27 +299,34 @@
         for (let i = 0; i < count; i++) {
             const hour = first + i;
             const value = hourly[String(hour).padStart(2, "0")] ?? 0;
-            const height = (value / peak) * 48;
-            const x = i * slot + slot * 0.18;
-            const width = slot * 0.64;
-            const color = hour === currentHour ? "#39f5c4" : "#1f8f74";
-            parts.push(`<rect x="${x}" y="${57 - height}" width="${width}" height="${Math.max(height, 0.6)}" fill="${color}"/>`);
+            const height = (value / peak) * 46;
+            const x = i * slot + slot * 0.2;
+            const width = slot * 0.6;
+            const color = hour === currentHour ? "#4f8cff" : "#34343a";
+            parts.push(`<rect x="${x}" y="${57 - height}" width="${width}" height="${Math.max(height, 0.8)}" rx="1.5" fill="${color}"/>`);
             if (value > 0) {
-                parts.push(`<text x="${x + width / 2}" y="${54 - height}" text-anchor="middle" font-size="7" fill="#e4f4ef" font-family="monospace">${value}</text>`);
+                parts.push(`<text x="${x + width / 2}" y="${53 - height}" text-anchor="middle" font-size="7" font-weight="600" fill="#b4b4bb" font-family="-apple-system, sans-serif">${value}</text>`);
             }
-            parts.push(`<text x="${x + width / 2}" y="68" text-anchor="middle" font-size="7" fill="#6f8c86" font-family="monospace">${hour}</text>`);
+            parts.push(`<text x="${x + width / 2}" y="68" text-anchor="middle" font-size="6.5" fill="#7d7d86" font-family="-apple-system, sans-serif">${hour}</text>`);
         }
         svg.innerHTML = parts.join("");
     }
 
     function renderTech(status) {
-        document.getElementById("t-video").textContent = `${Math.round(status.stream_fps)} FPS`;
-        document.getElementById("t-detect").textContent = `${Math.round(status.detect_fps)} FPS`;
+        document.getElementById("t-video").textContent = `${Math.round(status.stream_fps)} fps`;
+        document.getElementById("t-detect").textContent = `${Math.round(status.detect_fps)} fps`;
         document.getElementById("t-model").textContent = showPose ? "YOLO11n-pose" : "YOLO11n";
         const temp = status.system.temperature;
         const tempNode = document.getElementById("t-temp");
         tempNode.textContent = temp == null ? "–" : `${Math.round(temp)} °C`;
         tempNode.className = temp >= 75 ? "warn" : "";
+    }
+
+    function renderMode(cloud) {
+        const tags = [showPose ? "Kostra těla" : "Detekce lidí"];
+        if (showHeatmap) tags.push("Heatmapa");
+        if (cloud.blur_faces) tags.push("Anonymizace obličejů");
+        document.getElementById("mode").replaceChildren(...tags.map((tag) => element("span", null, tag)));
     }
 
     async function loadProject() {
@@ -430,20 +362,16 @@
             setNumber("n-passed", counter.line_in + counter.line_out);
             renderChart(counter.hourly);
             renderTech(status.data);
-
-            const tags = [showPose ? "KOSTRA TĚLA" : "DETEKCE LIDÍ"];
-            if (showHeatmap) tags.push("HEATMAPA");
-            if (cloud.blur_faces) tags.push("ANONYMIZACE");
-            document.getElementById("mode-tag").textContent = tags.join(" · ");
+            renderMode(cloud);
 
             const cloudOff = cloud.cloud_mode === "off";
             document.getElementById("step-cloud").classList.toggle("off", cloudOff);
             document.getElementById("step-cloud-text").textContent = cloudOff
-                ? "Teď vypnuto. Všechno běží jen lokálně na Pi."
-                : "Na požádání pošle snímek velkému jazykovému modelu a ten scénu popíše česky.";
-            document.getElementById("privacy").innerHTML = cloudOff
-                ? "Kamera s lokální AI · <b>nic se neukládá</b>"
-                : "Kamera s AI · <b>nic se neukládá</b> · popis scény zpracovává OpenAI";
+                ? "Momentálně vypnuto. Vše běží pouze lokálně na Raspberry Pi."
+                : "Na vyžádání odešle snímek jazykovému modelu, který scénu popíše česky.";
+            document.getElementById("privacy").textContent = cloudOff
+                ? "Žádné záznamy se neukládají. Veškeré zpracování probíhá lokálně."
+                : "Žádné záznamy se neukládají. Popis scény zpracovává OpenAI.";
 
             renderAi(cloud.cloud_mode, describe.data.busy, describe.data.results);
         } catch (error) {
@@ -451,7 +379,7 @@
     }
 
     function tickClock() {
-        document.getElementById("clock").textContent = new Date().toLocaleTimeString("cs-CZ");
+        document.getElementById("clock").textContent = new Date().toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
     }
 
     loadProject();
@@ -459,7 +387,7 @@
     tickClock();
     setInterval(refreshOverlay, 100);
     setInterval(refreshInfo, 1000);
-    setInterval(tickClock, 1000);
+    setInterval(tickClock, 10000);
 </script>
 </body>
 </html>

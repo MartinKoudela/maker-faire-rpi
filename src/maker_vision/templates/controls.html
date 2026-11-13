@@ -3,270 +3,187 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Maker Vision · ovládání</title>
-    <link rel="stylesheet" href="/static/css/hud.css">
+    <title>Maker Vision · Ovládání</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
     <style>
+        html { font-size: 14px; }
         body { min-height: 100vh; }
-        .mono { font-family: var(--mono); }
-        .label {
-            font-family: var(--mono);
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--muted);
-        }
-        .label b { color: var(--accent); font-weight: 600; }
 
         header {
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px 22px;
-            padding: 14px 22px;
-            border-bottom: 1px solid var(--line);
-            background: rgba(4, 7, 10, 0.85);
+            gap: 0.75rem 1.5rem;
+            padding: 0.9rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(12, 12, 14, 0.9);
+            backdrop-filter: blur(8px);
             position: sticky;
             top: 0;
             z-index: 10;
-            backdrop-filter: blur(6px);
         }
-        .logo { font-family: var(--mono); font-size: 18px; font-weight: 700; letter-spacing: 3px; }
-        .logo span { color: var(--accent); }
-        .logo small { color: var(--muted); font-weight: 400; letter-spacing: 2px; font-size: 12px; margin-left: 8px; }
-        .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
-        .chip {
-            font-family: var(--mono);
-            font-size: 12px;
-            border: 1px solid var(--line);
-            background: var(--panel);
-            padding: 5px 10px;
-            color: var(--muted);
-            white-space: nowrap;
+        .brand { display: flex; align-items: baseline; gap: 0.6rem; }
+        .brand h1 { font-size: 1.1rem; font-weight: 650; letter-spacing: -0.01em; }
+        .brand span { color: var(--muted); font-size: 0.95rem; }
+        .metrics { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; margin-left: auto; font-size: 0.85rem; color: var(--muted); }
+        .metrics b { color: var(--text); font-weight: 500; margin-left: 0.3rem; }
+        .metrics b.warn { color: var(--amber); }
+        .metrics b.hot { color: var(--red); }
+        .alert {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--red);
+            background: rgba(242, 85, 90, 0.1);
+            border: 1px solid rgba(242, 85, 90, 0.35);
+            border-radius: 999px;
+            padding: 0.2rem 0.65rem;
         }
-        .chip b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
-        .chip b.warn { color: var(--amber); }
-        .chip b.hot, .chip.alert, .chip.alert b { color: var(--red); }
-        .chip.alert { border-color: rgba(255, 77, 94, 0.5); }
-        .chip[hidden] { display: none; }
-        nav { display: flex; gap: 8px; }
-        nav a {
-            font-family: var(--mono);
-            font-size: 12px;
-            color: var(--accent);
-            text-decoration: none;
-            border: 1px solid var(--line-strong);
-            padding: 5px 10px;
-        }
-        nav a:hover { background: rgba(57, 245, 196, 0.1); }
+        .alert[hidden] { display: none; }
+        nav { display: flex; gap: 0.5rem; }
+        nav a { text-decoration: none; }
 
         main {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 400px;
-            gap: 22px;
-            padding: 22px;
-            max-width: 1700px;
+            grid-template-columns: minmax(0, 1fr) 27rem;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 1680px;
             margin: 0 auto;
             align-items: start;
         }
         @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
 
-        .left { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 80px; }
-        .video { background: #000; border: 1px solid var(--line); }
-        .video img { display: block; width: 100%; }
-        .video canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        .left { display: flex; flex-direction: column; gap: 0.75rem; position: sticky; top: 5rem; }
         .video canvas.picking { pointer-events: auto; cursor: crosshair; }
         .video .hint {
             position: absolute;
             left: 50%;
-            bottom: 14px;
+            bottom: 1rem;
             transform: translateX(-50%);
             z-index: 3;
-            font-family: var(--mono);
-            font-size: 13px;
-            background: rgba(0, 0, 0, 0.75);
+            font-size: 0.85rem;
+            font-weight: 500;
+            background: rgba(12, 12, 14, 0.85);
             border: 1px solid var(--amber);
             color: var(--amber);
-            padding: 6px 12px;
+            padding: 0.4rem 0.8rem;
+            border-radius: 999px;
         }
         .video .hint[hidden] { display: none; }
-        .timings { font-family: var(--mono); font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 16px; }
-        .timings b { color: var(--text); font-weight: 500; }
+        .timings { display: flex; flex-wrap: wrap; gap: 0.3rem 1.25rem; font-size: 0.8rem; color: var(--muted); }
+        .timings b { color: var(--text-2); font-weight: 500; font-family: var(--mono); font-size: 0.75rem; margin-left: 0.25rem; }
 
-        aside { display: flex; flex-direction: column; gap: 14px; }
-        .section { border: 1px solid var(--line); background: var(--panel); }
+        aside { display: flex; flex-direction: column; gap: 1rem; }
         .section > .head {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 14px;
-            border-bottom: 1px solid var(--line);
+            padding: 0.85rem 1.1rem;
+            border-bottom: 1px solid var(--border);
         }
-        .section > .body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
-        .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; }
-        .row .sub { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-        .switch {
-            position: relative;
-            width: 44px;
-            height: 24px;
-            flex: none;
-            border: 1px solid var(--line-strong);
-            background: transparent;
-            cursor: pointer;
+        .section > .head h2 { font-size: 0.95rem; font-weight: 600; }
+        .section > .body { padding: 0.5rem 1.1rem 1rem; display: flex; flex-direction: column; }
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.7rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
         }
-        .switch::after {
-            content: "";
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 16px;
-            height: 16px;
-            background: var(--muted);
-            transition: transform 0.15s, background 0.15s;
-        }
-        .switch.on { background: rgba(57, 245, 196, 0.15); }
-        .switch.on::after { transform: translateX(20px); background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+        .row:last-child { border-bottom: 0; }
+        .row .sub { display: block; font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+        .row .controls { display: flex; align-items: center; gap: 0.6rem; }
 
-        .segmented { display: flex; border: 1px solid var(--line-strong); }
-        .segmented button {
-            background: transparent;
-            color: var(--muted);
-            border: 0;
-            padding: 6px 12px;
-            font-family: var(--mono);
-            font-size: 12px;
-            letter-spacing: 1px;
-            cursor: pointer;
-        }
-        .segmented button + button { border-left: 1px solid var(--line-strong); }
-        .segmented button.active { background: var(--accent); color: var(--bg); font-weight: 700; }
+        .counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; padding: 0.6rem 0 0.9rem; }
+        .count { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.65rem 0.8rem; }
+        .count b { display: block; font-size: 1.6rem; font-weight: 650; letter-spacing: -0.02em; }
+        .count span { font-size: 0.75rem; color: var(--muted); }
+        .count.small b { font-size: 1.15rem; color: var(--text-2); }
+        .btn-row { display: flex; gap: 0.5rem; }
+        .btn-row .btn { flex: 1; }
 
-        .btn {
-            background: transparent;
-            color: var(--text);
-            border: 1px solid var(--line-strong);
-            padding: 7px 12px;
-            font-family: var(--mono);
-            font-size: 12px;
-            letter-spacing: 1px;
-            cursor: pointer;
-        }
-        .btn:hover { background: rgba(57, 245, 196, 0.1); }
-        .btn.active { background: var(--amber); border-color: var(--amber); color: var(--bg); }
-        .btn.danger { color: var(--red); border-color: rgba(255, 77, 94, 0.5); }
-        .btn.armed { background: var(--red); color: var(--bg); }
-        .btn-row { display: flex; gap: 8px; }
-        .btn-row .btn { flex: 1; white-space: nowrap; padding: 7px 8px; }
-
-        input, select {
-            background: var(--bg);
-            color: var(--text);
-            border: 1px solid var(--line-strong);
-            padding: 6px 8px;
-            font-family: var(--mono);
-            font-size: 13px;
-        }
-        input[type=number] { width: 100px; text-align: right; }
-
-        .counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .count { border: 1px solid var(--line); padding: 8px 10px; }
-        .count b { display: block; font-family: var(--mono); font-size: 26px; color: var(--accent); font-variant-numeric: tabular-nums; }
-        .count span { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
-        .count.small b { font-size: 18px; color: var(--text); }
-
-        .usage { display: flex; flex-direction: column; gap: 6px; }
-        .bar { height: 6px; background: rgba(57, 245, 196, 0.1); overflow: hidden; }
-        .bar div { height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
+        input[type=number] { width: 6.5rem; text-align: right; }
+        .usage { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.8rem 0 0.4rem; }
+        .bar { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+        .bar div { height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width 0.3s; }
         .bar div.warn { background: var(--amber); }
         .bar div.full { background: var(--red); }
-        .muted { color: var(--muted); font-size: 12px; font-family: var(--mono); }
-        .warning { color: var(--red); font-size: 13px; }
+        .usage-text { font-size: 0.8rem; color: var(--muted); }
+        .warning { color: var(--red); font-size: 0.85rem; padding-top: 0.4rem; }
         .warning:empty { display: none; }
+        #ask { width: 100%; padding: 0.75rem; font-size: 0.95rem; margin-top: 0.6rem; }
+        #ask-message { min-height: 1.1rem; font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; text-align: center; }
 
-        #ask {
-            width: 100%;
-            padding: 14px;
-            font-family: var(--mono);
-            font-size: 16px;
-            letter-spacing: 2px;
-            font-weight: 700;
-            border: 1px solid var(--accent);
-            background: rgba(57, 245, 196, 0.12);
-            color: var(--accent);
-            cursor: pointer;
-        }
-        #ask:hover:not(:disabled) { background: var(--accent); color: var(--bg); }
-        #ask:disabled { border-color: var(--line); color: var(--muted); background: transparent; cursor: not-allowed; }
-        #ask-message { min-height: 16px; }
-
-        .result { border-top: 1px solid var(--line); padding-top: 10px; font-size: 14px; }
-        .result:first-child { border-top: 0; padding-top: 0; }
-        .result .meta { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-        .result .summary { margin-bottom: 6px; line-height: 1.4; }
-        .result ul { list-style: none; color: #b9d3cc; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
-        .result li::before { content: "› "; color: var(--accent); font-family: var(--mono); }
-        .result .error { color: var(--red); font-family: var(--mono); font-size: 12px; }
+        .result { padding: 0.8rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .result:last-child { border-bottom: 0; }
+        .result .meta { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.35rem; }
+        .result .summary { line-height: 1.45; margin-bottom: 0.4rem; }
+        .result ul { list-style: none; color: var(--text-2); font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.2rem; }
+        .result li { padding-left: 0.7rem; border-left: 2px solid var(--border-strong); }
+        .result .error { color: var(--red); font-size: 0.8rem; font-family: var(--mono); }
+        .empty { color: var(--muted); font-size: 0.85rem; padding: 0.6rem 0; }
     </style>
 </head>
 <body>
 <header>
-    <div class="logo">MAKER<span>//</span>VISION<small>OVLÁDÁNÍ</small></div>
-    <div class="chips">
-        <div class="chip">VIDEO <b id="fps">–</b></div>
-        <div class="chip">DETEKCE <b id="detect-fps">–</b></div>
-        <div class="chip">LIDÍ <b id="people">–</b></div>
-        <div class="chip">CPU <b id="temp">–</b></div>
-        <div class="chip">ZÁTĚŽ <b id="load">–</b></div>
-        <div class="chip">SNÍMEK <b id="age">–</b></div>
-        <div class="chip alert" id="throttle" hidden></div>
+    <div class="brand"><h1>Maker Vision</h1><span>Ovládání</span></div>
+    <div class="metrics">
+        <span>Video<b id="fps">–</b></span>
+        <span>Detekce<b id="detect-fps">–</b></span>
+        <span>Lidí<b id="people">–</b></span>
+        <span>CPU<b id="temp">–</b></span>
+        <span>Zátěž<b id="load">–</b></span>
+        <span>Snímek<b id="age">–</b></span>
     </div>
+    <span class="alert" id="throttle" hidden></span>
     <nav>
-        <a href="/" target="_blank">Monitor ↗</a>
-        <a href="/stream" target="_blank">Stream ↗</a>
+        <a class="btn" href="/" target="_blank">Monitor ↗</a>
+        <a class="btn" href="/stream" target="_blank">Stream ↗</a>
     </nav>
 </header>
 <main>
     <section class="left">
-        <div class="frame video">
-            <i class="c3"></i><i class="c4"></i>
+        <div class="video">
             <img src="/stream" alt="stream">
             <canvas id="overlay"></canvas>
-            <div class="hint" id="line-message" hidden>Klikni do videa na začátek a konec čáry</div>
+            <div class="hint" id="line-message" hidden>Klikněte do videa na začátek a konec čáry</div>
         </div>
         <div class="timings" id="timings"></div>
     </section>
     <aside>
-        <section class="section">
-            <div class="head"><span class="label"><b>▸</b> Lokální AI</span><span class="muted">běží na Pi</span></div>
+        <section class="card section">
+            <div class="head"><h2>Lokální AI</h2><span class="caption">běží na Raspberry Pi</span></div>
             <div class="body">
                 <div class="row">
-                    <div>Kostra těla<span class="sub">YOLO11n-pose místo detekce, o kousek pomalejší</span></div>
-                    <button class="switch" data-setting="show_pose"></button>
+                    <div>Kostra těla<span class="sub">YOLO11n-pose místo detekce, mírně pomalejší</span></div>
+                    <button class="switch" data-setting="show_pose" aria-label="Kostra těla"></button>
                 </div>
                 <div class="row">
-                    <div>Rozmazat obličeje<span class="sub">pixelizace ve videu, popis od AI zůstává ostrý</span></div>
-                    <button class="switch" data-setting="blur_faces"></button>
+                    <div>Rozmazat obličeje<span class="sub">Pixelizace ve videu, popis od AI zůstává ostrý</span></div>
+                    <button class="switch" data-setting="blur_faces" aria-label="Rozmazat obličeje"></button>
                 </div>
                 <div class="row">
-                    <div>Heatmapa pohybu<span class="sub">kudy lidi chodí, bledne s časem</span></div>
-                    <div style="display: flex; gap: 8px; align-items: center;">
+                    <div>Heatmapa pohybu<span class="sub">Kudy lidé chodí, postupně bledne</span></div>
+                    <div class="controls">
                         <button class="btn" id="heatmap-clear">Vymazat</button>
-                        <button class="switch" data-setting="show_heatmap"></button>
+                        <button class="switch" data-setting="show_heatmap" aria-label="Heatmapa pohybu"></button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="section">
-            <div class="head"><span class="label"><b>▸</b> Počítání lidí</span><span class="muted" id="count-peak">–</span></div>
+        <section class="card section">
+            <div class="head"><h2>Počítání lidí</h2><span class="caption" id="count-peak">–</span></div>
             <div class="body">
                 <div class="counts">
-                    <div class="count"><b id="count-now">–</b><span>teď</span></div>
-                    <div class="count"><b id="count-unique">–</b><span>dnes u stánku</span></div>
-                    <div class="count"><b id="count-passed">–</b><span>dnes prošlo</span></div>
-                    <div class="count small"><b id="count-in">–</b><span>čára A → B</span></div>
-                    <div class="count small"><b id="count-out">–</b><span>čára B → A</span></div>
-                    <div class="count small"><b id="count-peak-num">–</b><span>max naráz</span></div>
+                    <div class="count"><b id="count-now">–</b><span>Právě teď</span></div>
+                    <div class="count"><b id="count-unique">–</b><span>Dnes u stánku</span></div>
+                    <div class="count"><b id="count-passed">–</b><span>Dnes prošlo</span></div>
+                    <div class="count small"><b id="count-in">–</b><span>Čára A → B</span></div>
+                    <div class="count small"><b id="count-out">–</b><span>Čára B → A</span></div>
+                    <div class="count small"><b id="count-peak-num">–</b><span>Max. naráz</span></div>
                 </div>
                 <div class="btn-row">
                     <button class="btn" id="line-pick">Nastavit čáru</button>
@@ -276,15 +193,15 @@
             </div>
         </section>
 
-        <section class="section">
-            <div class="head"><span class="label"><b>▸</b> Cloud AI</span><span class="muted">OpenAI</span></div>
+        <section class="card section">
+            <div class="head"><h2>Cloud AI</h2><span class="caption">OpenAI</span></div>
             <div class="body">
                 <div class="row">
                     <span>Režim</span>
                     <div class="segmented" id="cloud-mode">
-                        <button data-value="off">VYP</button>
-                        <button data-value="manual">TLAČÍTKO</button>
-                        <button data-value="auto">AUTO</button>
+                        <button data-value="off">Vypnuto</button>
+                        <button data-value="manual">Tlačítko</button>
+                        <button data-value="auto">Auto</button>
                     </div>
                 </div>
                 <div class="row">
@@ -297,17 +214,17 @@
                 </div>
                 <div class="usage">
                     <div class="bar"><div id="usage-bar"></div></div>
-                    <div class="muted" id="usage-text">–</div>
+                    <div class="usage-text" id="usage-text">–</div>
                 </div>
                 <div class="warning" id="cloud-warning"></div>
-                <button id="ask">CO VIDÍŠ?</button>
-                <div class="muted" id="ask-message"></div>
+                <button class="btn primary" id="ask">Co vidíš?</button>
+                <div id="ask-message"></div>
             </div>
         </section>
 
-        <section class="section">
-            <div class="head"><span class="label"><b>▸</b> Poslední popisy</span></div>
-            <div class="body" id="results"><span class="muted">Zatím nic.</span></div>
+        <section class="card section">
+            <div class="head"><h2>Poslední popisy</h2></div>
+            <div class="body" id="results"><div class="empty">Zatím žádný popis.</div></div>
         </section>
     </aside>
 </main>
@@ -384,7 +301,7 @@
         bar.className = ratio >= 1 ? "full" : ratio >= 0.8 ? "warn" : "";
         const tokens = cloud.usage.input_tokens + cloud.usage.output_tokens;
         document.getElementById("usage-text").textContent =
-            `DNES ${used} / ${limit} VOLÁNÍ · ${tokens.toLocaleString("cs-CZ")} TOKENŮ`;
+            `Dnes ${used} z ${limit} volání · ${tokens.toLocaleString("cs-CZ")} tokenů`;
 
         let warning = "";
         if (!cloud.openai_package) warning = REASONS.missing_openai_package;
@@ -432,7 +349,7 @@
         const flags = now.length > 0 ? now : past;
         throttle.hidden = flags.length === 0;
         throttle.textContent = flags.length === 0 ? "" :
-            `${now.length > 0 ? "⚠ " : "OD STARTU: "}${flags.map((flag) => THROTTLE_LABELS[flag]).join(", ")}`;
+            `${now.length > 0 ? "" : "Od startu: "}${flags.map((flag) => THROTTLE_LABELS[flag]).join(", ")}`;
     }
 
     function renderCounter(counter) {
@@ -442,13 +359,13 @@
         document.getElementById("count-in").textContent = counter.line_in;
         document.getElementById("count-out").textContent = counter.line_out;
         document.getElementById("count-peak-num").textContent = counter.peak_today;
-        document.getElementById("count-peak").textContent = counter.now > 0 ? "● někdo je v záběru" : "nikdo v záběru";
+        document.getElementById("count-peak").textContent = counter.now > 0 ? "Někdo je v záběru" : "Nikdo v záběru";
     }
 
     function renderTimings(timings) {
         const container = document.getElementById("timings");
         container.replaceChildren(...Object.entries(timings).map(([name, ms]) => {
-            const span = element("span", null, `${name.toUpperCase()} `);
+            const span = element("span", null, name.replace("_", " "));
             span.appendChild(element("b", null, `${ms} ms`));
             return span;
         }));
@@ -466,7 +383,7 @@
             renderCounter(data.counter);
             renderSystem(data.system);
         } catch (error) {
-            document.getElementById("fps").textContent = "OFFLINE";
+            document.getElementById("fps").textContent = "offline";
         }
     }
 

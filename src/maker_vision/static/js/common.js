@@ -27,6 +27,12 @@ const SKELETON = [
     [11, 13], [13, 15], [12, 14], [14, 16], [0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 6],
 ];
 const KEYPOINT_MIN_CONFIDENCE = 0.5;
+const COLORS = {
+    box: "#4f8cff",
+    skeleton: "rgba(255, 255, 255, 0.85)",
+    joint: "#4f8cff",
+    line: "#f2b347",
+};
 
 export class HeatmapLayer {
     constructor() {
@@ -71,25 +77,46 @@ export function drawOverlay(canvas, detections, options = {}) {
     if (options.pendingPoint) drawPoint(ctx, canvas, options.pendingPoint);
 
     const scale = canvas.width / 1280;
-    ctx.lineWidth = 3 * scale;
-    ctx.font = `bold ${Math.round(22 * scale)}px sans-serif`;
     for (const box of detections.boxes) {
         if (box.keypoints) drawSkeleton(ctx, box.keypoints, scale);
-        const [x1, y1, x2, y2] = box.xyxy;
-        ctx.strokeStyle = "#2ea043";
-        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-        if (options.showIds !== false) {
-            ctx.fillStyle = "#2ea043";
-            ctx.fillText(`#${box.track_id}`, x1 + 6 * scale, y1 + 24 * scale);
-        }
+        drawBox(ctx, box, scale, options.showIds !== false);
     }
+}
+
+function drawBox(ctx, box, scale, showId) {
+    const [x1, y1, x2, y2] = box.xyxy;
+    ctx.save();
+    ctx.lineWidth = 2.5 * scale;
+    ctx.strokeStyle = COLORS.box;
+    roundRect(ctx, x1, y1, x2 - x1, y2 - y1, 6 * scale);
+    ctx.stroke();
+    if (showId) {
+        const text = `#${box.track_id}`;
+        ctx.font = `600 ${Math.round(17 * scale)}px -apple-system, "Segoe UI", Roboto, sans-serif`;
+        const padding = 6 * scale;
+        const width = ctx.measureText(text).width + padding * 2;
+        const height = 24 * scale;
+        const top = Math.max(y1 - height - 4 * scale, 0);
+        ctx.fillStyle = COLORS.box;
+        roundRect(ctx, x1, top, width, height, 4 * scale);
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, x1 + padding, top + height / 2 + 1);
+    }
+    ctx.restore();
+}
+
+function roundRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, width, height, radius);
 }
 
 function drawSkeleton(ctx, keypoints, scale) {
     ctx.save();
     ctx.lineCap = "round";
-    ctx.lineWidth = 5 * scale;
-    ctx.strokeStyle = "#58a6ff";
+    ctx.lineWidth = 3.5 * scale;
+    ctx.strokeStyle = COLORS.skeleton;
     for (const [a, b] of SKELETON) {
         const [ax, ay, ac] = keypoints[a];
         const [bx, by, bc] = keypoints[b];
@@ -99,18 +126,21 @@ function drawSkeleton(ctx, keypoints, scale) {
         ctx.lineTo(bx, by);
         ctx.stroke();
     }
-    ctx.fillStyle = "#f0f6fc";
+    ctx.fillStyle = COLORS.joint;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.5 * scale;
     for (const [x, y, c] of keypoints) {
         if (c < KEYPOINT_MIN_CONFIDENCE) continue;
         ctx.beginPath();
-        ctx.arc(x, y, 5 * scale, 0, Math.PI * 2);
+        ctx.arc(x, y, 4.5 * scale, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
     }
     ctx.restore();
 }
 
 function drawPoint(ctx, canvas, [x, y]) {
-    ctx.fillStyle = "#d29922";
+    ctx.fillStyle = COLORS.line;
     ctx.beginPath();
     ctx.arc(x * canvas.width, y * canvas.height, 10, 0, Math.PI * 2);
     ctx.fill();
@@ -119,9 +149,9 @@ function drawPoint(ctx, canvas, [x, y]) {
 function drawCountLine(ctx, canvas, line) {
     const [x1, y1, x2, y2] = line.map((v, i) => v * (i % 2 === 0 ? canvas.width : canvas.height));
     ctx.save();
-    ctx.strokeStyle = "#d29922";
-    ctx.lineWidth = 4;
-    ctx.setLineDash([16, 10]);
+    ctx.strokeStyle = COLORS.line;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([14, 10]);
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
@@ -132,8 +162,9 @@ function drawCountLine(ctx, canvas, line) {
     const length = Math.hypot(x2 - x1, y2 - y1);
     const nx = (y2 - y1) / length;
     const ny = -(x2 - x1) / length;
-    ctx.fillStyle = "#d29922";
-    ctx.font = "bold 26px sans-serif";
+    ctx.fillStyle = COLORS.line;
+    ctx.font = "600 24px -apple-system, \"Segoe UI\", Roboto, sans-serif";
+    ctx.textBaseline = "middle";
     ctx.textAlign = "center";
     ctx.fillText("A", mx - nx * 40, my - ny * 40);
     ctx.fillText("B", mx + nx * 40, my + ny * 40);
