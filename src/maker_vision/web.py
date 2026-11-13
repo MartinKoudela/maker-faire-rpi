@@ -42,8 +42,12 @@ def create_app(
         }
 
     @app.route("/")
-    def index():
-        return render_template("index.html")
+    def display():
+        return render_template("display.html")
+
+    @app.route("/controls")
+    def controls():
+        return render_template("controls.html")
 
     @app.route("/stream")
     def stream():

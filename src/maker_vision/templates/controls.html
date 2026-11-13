@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Maker Vision</title>
+    <title>Maker Vision – ovládání</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -106,7 +106,7 @@
 </head>
 <body>
 <header>
-    <h1>Maker Vision</h1>
+    <h1>Maker Vision · ovládání</h1>
     <span class="stat">Lidí teď: <b id="people">–</b></span>
     <span class="stat">FPS: <b id="fps">–</b></span>
     <span class="stat">Stáří snímku: <b id="age">–</b></span>
@@ -165,20 +165,12 @@
         </section>
     </aside>
 </main>
-<script>
-    const REASONS = {
-        cloud_off: "Cloud AI je vypnutá.",
-        auto_disabled: "Auto režim není zapnutý.",
-        missing_api_key: "Chybí OPENAI_API_KEY v .env.",
-        missing_openai_package: "Chybí balíček openai (pip install -e .).",
-        busy: "Ještě přemýšlím nad předchozím snímkem…",
-        daily_limit: "Denní strop volání je vyčerpaný.",
-        no_frame: "Kamera ještě neposlala snímek.",
-    };
+<script type="module">
+    import { REASONS, drawOverlay, fetchJson, postJson } from "/static/js/common.js";
+
     const SOURCES = { manual: "tlačítko", auto: "auto" };
 
     const canvas = document.getElementById("overlay");
-    const ctx = canvas.getContext("2d");
     const askButton = document.getElementById("ask");
     const askMessage = document.getElementById("ask-message");
     let lastResultId = null;
@@ -187,13 +179,8 @@
     let resetArmedUntil = 0;
 
     async function postSettings(changes) {
-        const response = await fetch("/api/settings", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(changes),
-        });
-        const data = await response.json();
-        if (!response.ok) {
+        const { ok, data } = await postJson("/api/settings", changes);
+        if (!ok) {
             alertInline(data.error);
         }
         await refreshStatus();
@@ -204,8 +191,7 @@
     }
 
     async function loadSettings() {
-        const response = await fetch("/api/settings");
-        const data = await response.json();
+        const { data } = await fetchJson("/api/settings");
         const select = document.getElementById("model");
         select.innerHTML = "";
         for (const model of data.options.model) {
@@ -303,57 +289,12 @@
 
     async function drawBoxes() {
         try {
-            const response = await fetch("/api/detections");
-            const data = await response.json();
-            canvas.width = data.frame_width;
-            canvas.height = data.frame_height;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawLine();
-            ctx.lineWidth = 3;
-            ctx.font = "bold 22px sans-serif";
-            for (const box of data.boxes) {
-                const [x1, y1, x2, y2] = box.xyxy;
-                ctx.strokeStyle = "#2ea043";
-                ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-                ctx.fillStyle = "#2ea043";
-                ctx.fillText(`#${box.track_id}`, x1 + 6, y1 + 24);
-            }
+            const { data } = await fetchJson("/api/detections");
+            const pendingPoint = pickedPoints && pickedPoints.length === 1 ? pickedPoints[0] : null;
+            drawOverlay(canvas, data, { line: pendingPoint ? null : countLine, pendingPoint });
         } catch (error) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
         }
-    }
-
-    function drawLine() {
-        const points = pickedPoints && pickedPoints.length === 1 ? null : countLine;
-        if (pickedPoints && pickedPoints.length === 1) {
-            const [x, y] = pickedPoints[0];
-            ctx.fillStyle = "#d29922";
-            ctx.beginPath();
-            ctx.arc(x * canvas.width, y * canvas.height, 10, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        if (!points) return;
-        const [x1, y1, x2, y2] = points.map((v, i) => v * (i % 2 === 0 ? canvas.width : canvas.height));
-        ctx.save();
-        ctx.strokeStyle = "#d29922";
-        ctx.lineWidth = 4;
-        ctx.setLineDash([16, 10]);
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        const mx = (x1 + x2) / 2;
-        const my = (y1 + y2) / 2;
-        const length = Math.hypot(x2 - x1, y2 - y1);
-        const nx = (y2 - y1) / length;
-        const ny = -(x2 - x1) / length;
-        ctx.fillStyle = "#d29922";
-        ctx.font = "bold 26px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("A", mx - nx * 40, my - ny * 40);
-        ctx.fillText("B", mx + nx * 40, my + ny * 40);
-        ctx.restore();
     }
 
     function renderCounter(counter) {
@@ -366,8 +307,7 @@
 
     async function refreshStatus() {
         try {
-            const response = await fetch("/api/status");
-            const data = await response.json();
+            const { data } = await fetchJson("/api/status");
             document.getElementById("people").textContent = data.people_now;
             document.getElementById("fps").textContent = data.fps;
             document.getElementById("age").textContent = data.frame_age === null ? "–" : `${data.frame_age} s`;
@@ -381,8 +321,7 @@
 
     async function refreshResults() {
         try {
-            const response = await fetch("/api/describe");
-            const data = await response.json();
+            const { data } = await fetchJson("/api/describe");
             renderResults(data.results);
         } catch (error) {
         }
@@ -400,9 +339,8 @@
     askButton.addEventListener("click", async () => {
         askButton.disabled = true;
         askMessage.textContent = "Přemýšlím…";
-        const response = await fetch("/api/describe", { method: "POST" });
-        if (!response.ok) {
-            const data = await response.json();
+        const { ok, data } = await postJson("/api/describe");
+        if (!ok) {
             askMessage.textContent = REASONS[data.error] || data.error;
         }
         await refreshStatus();
@@ -456,7 +394,7 @@
         }
         resetArmedUntil = 0;
         resetButton.textContent = "Vynulovat";
-        await fetch("/api/counter/reset", { method: "POST" });
+        await postJson("/api/counter/reset");
         await refreshStatus();
     });
 

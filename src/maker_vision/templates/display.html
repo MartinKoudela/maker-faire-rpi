@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Maker Vision</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            background: #05080c;
+            color: #e6edf3;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            cursor: none;
+            display: grid;
+            grid-template-rows: 1fr auto;
+        }
+        .stage {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 30vw;
+            gap: 1.5vw;
+            padding: 1.5vw;
+            min-height: 0;
+        }
+        .video {
+            position: relative;
+            border-radius: 1vw;
+            overflow: hidden;
+            background: #000;
+            align-self: center;
+        }
+        .video img { display: block; width: 100%; }
+        .video canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+        aside { display: flex; flex-direction: column; gap: 1.2vw; min-height: 0; }
+        .numbers { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2vw; }
+        .big {
+            background: #0d141c;
+            border: 1px solid #1c2733;
+            border-radius: 1vw;
+            padding: 1.2vw;
+        }
+        .big b { display: block; font-size: 5vw; line-height: 1; font-variant-numeric: tabular-nums; color: #3fb950; }
+        .big span { color: #8b98a5; font-size: 1.1vw; }
+        .ai {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            background: #0d141c;
+            border: 1px solid #1c2733;
+            border-radius: 1vw;
+            padding: 1.4vw;
+        }
+        .ai h2 { font-size: 1.2vw; text-transform: uppercase; letter-spacing: 0.1vw; color: #8b98a5; margin-bottom: 1vw; }
+        .ai .summary { font-size: 1.9vw; line-height: 1.3; margin-bottom: 1.2vw; }
+        .ai .hint { font-size: 1.6vw; color: #8b98a5; line-height: 1.35; }
+        .ai ul { list-style: none; display: flex; flex-direction: column; gap: 0.7vw; margin-bottom: 1.2vw; }
+        .ai li { font-size: 1.25vw; line-height: 1.35; padding-left: 1.4vw; position: relative; color: #c9d1d9; }
+        .ai li::before { content: "•"; position: absolute; left: 0.2vw; color: #3fb950; }
+        .ai .objects { display: flex; flex-wrap: wrap; gap: 0.5vw; }
+        .ai .objects span {
+            font-size: 1.1vw;
+            background: #1c2733;
+            border-radius: 2vw;
+            padding: 0.3vw 0.9vw;
+        }
+        .thinking { font-size: 1.9vw; color: #58a6ff; animation: pulse 1.2s ease-in-out infinite; }
+        @keyframes pulse { 50% { opacity: 0.35; } }
+        footer {
+            padding: 0.8vw 1.5vw;
+            font-size: 1.1vw;
+            color: #8b98a5;
+            background: #0b0f14;
+            border-top: 1px solid #1c2733;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+<div class="stage">
+    <div class="video">
+        <img src="/stream" alt="">
+        <canvas id="overlay"></canvas>
+    </div>
+    <aside>
+        <div class="numbers">
+            <div class="big"><b id="now">0</b><span>lidí právě teď</span></div>
+            <div class="big"><b id="today">0</b><span>lidí dnes u nás</span></div>
+        </div>
+        <section class="ai">
+            <h2>Co vidí AI</h2>
+            <div id="ai-content"></div>
+        </section>
+    </aside>
+</div>
+<footer>
+    <span id="privacy">Kamera s AI · nic se neukládá</span>
+    <span>Maker Faire Olomouc</span>
+</footer>
+<script type="module">
+    import { drawOverlay, fetchJson } from "/static/js/common.js";
+
+    const RESULT_TTL_SECONDS = 120;
+    const HINT = "Kamera v reálném čase hledá lidi a počítá, kolik vás dnes přišlo. Umí taky popsat, co právě vidí.";
+
+    const canvas = document.getElementById("overlay");
+    const content = document.getElementById("ai-content");
+    let renderedKey = null;
+
+    function element(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+    }
+
+    function renderAi(busy, results) {
+        const latest = results.find((result) => result.status === "ok");
+        const fresh = latest && Date.now() / 1000 - latest.ts < RESULT_TTL_SECONDS;
+        const key = busy ? "busy" : fresh ? `result-${latest.id}` : "hint";
+        if (key === renderedKey) return;
+        renderedKey = key;
+        content.replaceChildren();
+
+        if (busy) {
+            content.appendChild(element("div", "thinking", "Dívám se a přemýšlím…"));
+            return;
+        }
+        if (!fresh) {
+            content.appendChild(element("div", "hint", HINT));
+            return;
+        }
+
+        content.appendChild(element("div", "summary", latest.summary));
+        if (latest.people.length > 0) {
+            const list = element("ul");
+            for (const person of latest.people) {
+                list.appendChild(element("li", null, `${person.description} – ${person.activity}`));
+            }
+            content.appendChild(list);
+        }
+        if (latest.objects.length > 0) {
+            const objects = element("div", "objects");
+            for (const name of latest.objects) objects.appendChild(element("span", null, name));
+            content.appendChild(objects);
+        }
+    }
+
+    async function refreshOverlay() {
+        try {
+            const { data } = await fetchJson("/api/detections");
+            drawOverlay(canvas, data, { showIds: true });
+        } catch (error) {
+        }
+    }
+
+    async function refreshInfo() {
+        try {
+            const [status, describe] = await Promise.all([fetchJson("/api/status"), fetchJson("/api/describe")]);
+            document.getElementById("now").textContent = status.data.counter.now;
+            document.getElementById("today").textContent = status.data.counter.unique_today;
+            document.getElementById("privacy").textContent = status.data.cloud.cloud_mode === "off"
+                ? "Kamera s lokální AI · nic se neukládá"
+                : "Kamera s AI · nic se neukládá · popis scény zpracovává OpenAI";
+            renderAi(describe.data.busy, describe.data.results);
+        } catch (error) {
+        }
+    }
+
+    refreshInfo();
+    setInterval(refreshOverlay, 200);
+    setInterval(refreshInfo, 1000);
+</script>
+</body>
+</html>

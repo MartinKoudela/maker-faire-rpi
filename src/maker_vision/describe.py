@@ -132,6 +132,7 @@ class Describer:
             record = {
                 "source": source,
                 "model": model,
+                "ts": requested_at,
                 "time": time.strftime("%H:%M:%S", time.localtime(requested_at)),
             }
             started = time.monotonic()
