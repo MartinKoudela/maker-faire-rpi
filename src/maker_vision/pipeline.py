@@ -147,6 +147,9 @@ class Pipeline:
                     detection = self.latest_detection()
                     if time.time() - detection.detected_at < config.FACE_MAX_AGE_SECONDS:
                         shown = self._faces.blur(image, detection.faces)
+                if shown.shape[1] > config.STREAM_WIDTH:
+                    scale = config.STREAM_WIDTH / shown.shape[1]
+                    shown = cv2.resize(shown, (config.STREAM_WIDTH, round(shown.shape[0] * scale)), interpolation=cv2.INTER_LINEAR)
                 blurred = time.perf_counter()
 
                 ok, buffer = cv2.imencode(".jpg", shown, [cv2.IMWRITE_JPEG_QUALITY, config.STREAM_JPEG_QUALITY])
@@ -157,7 +160,7 @@ class Pipeline:
                 continue
 
             self._timings.add("capture", captured - started)
-            self._timings.add("blur", blurred - captured)
+            self._timings.add("blur_resize", blurred - captured)
             self._timings.add("encode", encoded - blurred)
             self._stream_rate.tick()
 
