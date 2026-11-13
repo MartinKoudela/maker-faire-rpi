@@ -340,12 +340,8 @@
         }
     }
 
-    async function refreshOverlay() {
-        try {
-            const { data } = await fetchJson("/api/detections");
-            drawOverlay(canvas, data, { showIds: true, heatmap: showHeatmap ? heatmap.image : null });
-        } catch (error) {
-        }
+    function refreshOverlay() {
+        drawOverlay(canvas, { heatmap: showHeatmap ? heatmap.image : null });
     }
 
     async function refreshInfo() {
@@ -385,7 +381,7 @@
     loadProject();
     refreshInfo();
     tickClock();
-    setInterval(refreshOverlay, 100);
+    setInterval(refreshOverlay, 250);
     setInterval(refreshInfo, 1000);
     setInterval(tickClock, 10000);
 </script>

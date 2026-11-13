@@ -11,6 +11,7 @@ from maker_vision import config
 from maker_vision.capture import create_source
 from maker_vision.detection import PersonDetector
 from maker_vision.faces import FaceBlurrer
+from maker_vision.overlay import draw_detections
 from maker_vision.settings import SettingsStore
 
 NO_FACES = np.empty((0, 4), dtype=np.float32)
@@ -142,15 +143,22 @@ class Pipeline:
                 image = self._source.read()
                 captured = time.perf_counter()
 
+                detection = self.latest_detection()
+                fresh = time.time() - detection.detected_at < config.FACE_MAX_AGE_SECONDS
                 shown = image
-                if self._settings.get().blur_faces:
-                    detection = self.latest_detection()
-                    if time.time() - detection.detected_at < config.FACE_MAX_AGE_SECONDS:
-                        shown = self._faces.blur(image, detection.faces)
+                if fresh and self._settings.get().blur_faces:
+                    shown = self._faces.blur(image, detection.faces)
+                scale = 1.0
                 if shown.shape[1] > config.STREAM_WIDTH:
                     scale = config.STREAM_WIDTH / shown.shape[1]
                     shown = cv2.resize(shown, (config.STREAM_WIDTH, round(shown.shape[0] * scale)), interpolation=cv2.INTER_LINEAR)
                 blurred = time.perf_counter()
+
+                if fresh and len(detection.detections):
+                    if shown is image:
+                        shown = image.copy()
+                    draw_detections(shown, detection.detections, scale)
+                drawn = time.perf_counter()
 
                 ok, buffer = cv2.imencode(".jpg", shown, [cv2.IMWRITE_JPEG_QUALITY, config.STREAM_JPEG_QUALITY])
                 encoded = time.perf_counter()
@@ -161,7 +169,8 @@ class Pipeline:
 
             self._timings.add("capture", captured - started)
             self._timings.add("blur_resize", blurred - captured)
-            self._timings.add("encode", encoded - blurred)
+            self._timings.add("overlay", drawn - blurred)
+            self._timings.add("encode", encoded - drawn)
             self._stream_rate.tick()
 
             with self._frame_condition:

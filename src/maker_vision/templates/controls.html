@@ -395,18 +395,13 @@
         }
     }
 
-    async function drawBoxes() {
-        try {
-            const { data } = await fetchJson("/api/detections");
-            const pendingPoint = pickedPoints && pickedPoints.length === 1 ? pickedPoints[0] : null;
-            drawOverlay(canvas, data, {
-                line: pendingPoint ? null : countLine,
-                pendingPoint,
-                heatmap: showHeatmap ? heatmap.image : null,
-            });
-        } catch (error) {
-            canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-        }
+    function refreshOverlay() {
+        const pendingPoint = pickedPoints && pickedPoints.length === 1 ? pickedPoints[0] : null;
+        drawOverlay(canvas, {
+            line: pendingPoint ? null : countLine,
+            pendingPoint,
+            heatmap: showHeatmap ? heatmap.image : null,
+        });
     }
 
     function stopPicking() {
@@ -494,7 +489,7 @@
     loadSettings();
     refreshStatus();
     refreshResults();
-    setInterval(drawBoxes, 100);
+    setInterval(refreshOverlay, 250);
     setInterval(() => { if (showHeatmap) heatmap.refresh(); }, 1000);
     setInterval(refreshStatus, 1000);
     setInterval(refreshResults, 1000);

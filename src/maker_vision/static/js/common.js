@@ -22,17 +22,9 @@ export function postJson(url, body) {
     });
 }
 
-const SKELETON = [
-    [5, 7], [7, 9], [6, 8], [8, 10], [5, 6], [5, 11], [6, 12], [11, 12],
-    [11, 13], [13, 15], [12, 14], [14, 16], [0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 6],
-];
-const KEYPOINT_MIN_CONFIDENCE = 0.5;
-const COLORS = {
-    box: "#4f8cff",
-    skeleton: "rgba(255, 255, 255, 0.85)",
-    joint: "#4f8cff",
-    line: "#f2b347",
-};
+const COLORS = { line: "#f2b347" };
+const CANVAS_WIDTH = 1280;
+const CANVAS_HEIGHT = 720;
 
 export class HeatmapLayer {
     constructor() {
@@ -59,10 +51,10 @@ export class HeatmapLayer {
     }
 }
 
-export function drawOverlay(canvas, detections, options = {}) {
+export function drawOverlay(canvas, options = {}) {
     const ctx = canvas.getContext("2d");
-    canvas.width = detections.frame_width;
-    canvas.height = detections.frame_height;
+    if (canvas.width !== CANVAS_WIDTH) canvas.width = CANVAS_WIDTH;
+    if (canvas.height !== CANVAS_HEIGHT) canvas.height = CANVAS_HEIGHT;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (options.heatmap) {
@@ -75,68 +67,6 @@ export function drawOverlay(canvas, detections, options = {}) {
 
     if (options.line) drawCountLine(ctx, canvas, options.line);
     if (options.pendingPoint) drawPoint(ctx, canvas, options.pendingPoint);
-
-    const scale = canvas.width / 1280;
-    for (const box of detections.boxes) {
-        if (box.keypoints) drawSkeleton(ctx, box.keypoints, scale);
-        drawBox(ctx, box, scale, options.showIds !== false);
-    }
-}
-
-function drawBox(ctx, box, scale, showId) {
-    const [x1, y1, x2, y2] = box.xyxy;
-    ctx.save();
-    ctx.lineWidth = 2.5 * scale;
-    ctx.strokeStyle = COLORS.box;
-    roundRect(ctx, x1, y1, x2 - x1, y2 - y1, 6 * scale);
-    ctx.stroke();
-    if (showId) {
-        const text = `#${box.track_id}`;
-        ctx.font = `600 ${Math.round(17 * scale)}px -apple-system, "Segoe UI", Roboto, sans-serif`;
-        const padding = 6 * scale;
-        const width = ctx.measureText(text).width + padding * 2;
-        const height = 24 * scale;
-        const top = Math.max(y1 - height - 4 * scale, 0);
-        ctx.fillStyle = COLORS.box;
-        roundRect(ctx, x1, top, width, height, 4 * scale);
-        ctx.fill();
-        ctx.fillStyle = "#ffffff";
-        ctx.textBaseline = "middle";
-        ctx.fillText(text, x1 + padding, top + height / 2 + 1);
-    }
-    ctx.restore();
-}
-
-function roundRect(ctx, x, y, width, height, radius) {
-    ctx.beginPath();
-    ctx.roundRect(x, y, width, height, radius);
-}
-
-function drawSkeleton(ctx, keypoints, scale) {
-    ctx.save();
-    ctx.lineCap = "round";
-    ctx.lineWidth = 3.5 * scale;
-    ctx.strokeStyle = COLORS.skeleton;
-    for (const [a, b] of SKELETON) {
-        const [ax, ay, ac] = keypoints[a];
-        const [bx, by, bc] = keypoints[b];
-        if (ac < KEYPOINT_MIN_CONFIDENCE || bc < KEYPOINT_MIN_CONFIDENCE) continue;
-        ctx.beginPath();
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(bx, by);
-        ctx.stroke();
-    }
-    ctx.fillStyle = COLORS.joint;
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1.5 * scale;
-    for (const [x, y, c] of keypoints) {
-        if (c < KEYPOINT_MIN_CONFIDENCE) continue;
-        ctx.beginPath();
-        ctx.arc(x, y, 4.5 * scale, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-    }
-    ctx.restore();
 }
 
 function drawPoint(ctx, canvas, [x, y]) {
