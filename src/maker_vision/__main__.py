@@ -11,7 +11,7 @@ from maker_vision.web import create_app
 def main() -> None:
     settings = SettingsStore(config.DATA_DIR / "settings.json")
     usage = UsageCounter(config.DATA_DIR / "usage.json")
-    pipeline = Pipeline()
+    pipeline = Pipeline(settings)
     describer = Describer(settings, usage)
     counter = PeopleCounter(pipeline, settings, config.DATA_DIR / "counter.json")
     system = SystemMonitor()

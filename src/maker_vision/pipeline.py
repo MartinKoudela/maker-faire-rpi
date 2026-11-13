@@ -10,6 +10,8 @@ import supervision as sv
 from maker_vision import config
 from maker_vision.capture import create_source
 from maker_vision.detection import PersonDetector
+from maker_vision.faces import FaceBlurrer
+from maker_vision.settings import SettingsStore
 
 
 @dataclass(frozen=True)
@@ -33,9 +35,11 @@ EMPTY_SNAPSHOT = Snapshot(
 
 
 class Pipeline:
-    def __init__(self) -> None:
+    def __init__(self, settings: SettingsStore) -> None:
+        self._settings = settings
         self._source = create_source()
         self._detector = PersonDetector()
+        self._faces = FaceBlurrer()
         self._condition = threading.Condition()
         self._snapshot = EMPTY_SNAPSHOT
         self._running = False
@@ -70,7 +74,10 @@ class Pipeline:
             try:
                 frame = self._source.read()
                 detections = self._detector.detect(frame)
-                ok, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, config.STREAM_JPEG_QUALITY])
+                shown = frame
+                if self._settings.get().blur_faces:
+                    shown = self._faces.blur(frame, self._faces.detect(frame))
+                ok, buffer = cv2.imencode(".jpg", shown, [cv2.IMWRITE_JPEG_QUALITY, config.STREAM_JPEG_QUALITY])
             except Exception:
                 traceback.print_exc()
                 time.sleep(0.5)

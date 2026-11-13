@@ -140,6 +140,16 @@
             <div class="muted" id="line-message" style="margin-top: 8px;"></div>
         </section>
         <section class="card">
+            <h2>Video</h2>
+            <div class="row">
+                <span>Rozmazat obličeje</span>
+                <div class="segmented" id="blur-faces">
+                    <button data-value="false">Vyp</button>
+                    <button data-value="true">Zap</button>
+                </div>
+            </div>
+        </section>
+        <section class="card">
             <h2>Cloud AI</h2>
             <div class="row">
                 <span>Režim</span>
@@ -219,6 +229,9 @@
             limitInput.value = settings.daily_limit;
         }
         document.getElementById("model").value = settings.model;
+        for (const button of document.querySelectorAll("#blur-faces button")) {
+            button.classList.toggle("active", button.dataset.value === String(settings.blur_faces));
+        }
     }
 
     function renderCloud(cloud) {
@@ -356,6 +369,9 @@
 
     for (const button of document.querySelectorAll("#cloud-mode button")) {
         button.addEventListener("click", () => postSettings({ cloud_mode: button.dataset.value }));
+    }
+    for (const button of document.querySelectorAll("#blur-faces button")) {
+        button.addEventListener("click", () => postSettings({ blur_faces: button.dataset.value === "true" }));
     }
     document.getElementById("daily-limit").addEventListener("change", (event) => {
         const value = Number.parseInt(event.target.value, 10);
