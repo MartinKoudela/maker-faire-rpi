@@ -1,0 +1,26 @@
+[Unit]
+Description=Maker Vision kiosk on tty1
+After=maker-vision.service systemd-user-sessions.service dbus.socket systemd-logind.service getty@tty1.service
+Wants=maker-vision.service dbus.socket systemd-logind.service
+Conflicts=getty@tty1.service
+ConditionPathExists=/dev/tty1
+
+[Service]
+Type=simple
+User=g1-admin
+SupplementaryGroups=video render input
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+StandardInput=tty-fail
+UtmpIdentifier=tty1
+UtmpMode=user
+ExecStartPre=/bin/sh -c 'until curl -sf -o /dev/null http://localhost:5000/api/status; do sleep 1; done'
+ExecStart=/usr/bin/cage -- /usr/bin/chromium --kiosk --ozone-platform=wayland --noerrdialogs --disable-infobars --no-first-run --disable-session-crashed-bubble --disable-features=Translate --password-store=basic --check-for-update-interval=31536000 http://localhost:5000/
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

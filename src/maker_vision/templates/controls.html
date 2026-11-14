@@ -252,6 +252,7 @@
     let pickedPoints = null;
     let resetArmedUntil = 0;
     let showHeatmap = false;
+    let offline = false;
 
     function element(tag, className, text) {
         const node = document.createElement(tag);
@@ -375,6 +376,7 @@
     async function refreshStatus() {
         try {
             const { data } = await fetchJson("/api/status");
+            if (offline) location.reload();
             document.getElementById("people").textContent = data.people_now;
             const pirNode = document.getElementById("pir");
             pirNode.textContent = data.pir.available ? (data.pir.motion ? "pohyb" : "klid") + ` · ${data.pir.triggers_today}×` : "–";
@@ -388,6 +390,7 @@
             renderSystem(data.system);
         } catch (error) {
             document.getElementById("fps").textContent = "offline";
+            offline = true;
         }
     }
 

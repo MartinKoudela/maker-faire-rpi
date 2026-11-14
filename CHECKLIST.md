@@ -27,7 +27,8 @@ Projekt běží na Raspberry Pi 5 jako služba `maker-vision` (port `5000`). Po 
 - [ ] Raspberry Pi 5 v krabičce s kamerou a chladičem
 - [ ] Oficiální napájecí zdroj 27 W (slabší zdroj = podpětí a škrcení výkonu)
 - [ ] PIR čidlo připojené na GPIO17 (VCC → 5 V, GND → GND, OUT → pin 11)
-- [ ] Mac + nabíječka, HDMI kabel / redukce k monitoru
+- [ ] Kabel micro-HDMI → HDMI (monitor přímo k Pi)
+- [ ] Mac + nabíječka, HDMI kabel jako záloha
 - [ ] Telefon pro hotspot + nabíječka
 - [ ] Prodlužovačka s více zásuvkami
 - [ ] Izolepa / stahovací pásky na uchycení kamery a kabelů
@@ -40,11 +41,12 @@ Projekt běží na Raspberry Pi 5 jako služba `maker-vision` (port `5000`). Po 
 1. Zapnout hotspot na telefonu.
 2. Umístit kameru tak, aby viděla prostor před stánkem, ideálně šikmo shora. Kamera je v krabičce vzhůru nohama, obraz se otáčí softwarově.
 3. PIR čidlo namířit do stejného prostoru jako kameru.
-4. Zapojit napájení Pi. Počkat cca 60 s na start.
-5. Připojit Mac k hotspotu a otevřít `http://<ip-pi>:5000/controls`.
+4. Připojit monitor k Pi kabelem micro-HDMI (port HDMI0, blíž k napájení).
+5. Zapojit napájení Pi. Do cca 60 s se na monitoru sám otevře přehled přes celou obrazovku (služba `kiosk`).
+6. Připojit Mac nebo mobil k hotspotu a otevřít `http://<ip-pi>:5000/controls`.
    IP adresu Pi zjistíš v seznamu připojených zařízení na hotspotu, nebo na Pi příkazem `hostname -I`.
-6. Připojit monitor k Macu, otevřít `http://<ip-pi>:5000/` a přepnout do režimu celé obrazovky (`⌃⌘F`).
-7. Zabránit uspání Macu: v Terminálu spustit `caffeinate -d` a nechat okno otevřené. Zapnout režim *Nerušit*.
+
+Záložní varianta bez kabelu micro-HDMI: monitor připojit k Macu, otevřít `http://<ip-pi>:5000/` přes celou obrazovku (`⌃⌘F`), spustit `caffeinate -d` a zapnout režim *Nerušit*. Video pak jde přes hotspot.
 
 ---
 
@@ -77,6 +79,7 @@ V `/controls`:
 
 | Problém | Příčina | Řešení |
 |---|---|---|
+| Monitor je černý | Kiosk neběží / monitor připojen až po startu | `sudo systemctl restart kiosk`, `journalctl -u kiosk -e` |
 | Stránka se nenačte | Pi neběží / jiná síť / jiná IP | Ověřit, že Mac i Pi jsou na hotspotu; zjistit IP; `sudo systemctl status maker-vision` |
 | Video stojí, *Snímek* roste | Kamera nebo detekce zamrzla | Watchdog restartuje službu sám do ~15 s. Jinak `sudo systemctl restart maker-vision` |
 | Video se seká | Slabá Wi-Fi, mnoho otevřených streamů | Zavřít nepotřebné záložky. V `.env` nastavit `STREAM_JPEG_QUALITY=60` a restartovat |
@@ -93,6 +96,7 @@ V `/controls`:
 ```bash
 sudo systemctl status maker-vision
 sudo systemctl restart maker-vision
+sudo systemctl restart kiosk
 journalctl -u maker-vision -f
 journalctl -u maker-vision | grep health | tail
 vcgencmd measure_temp
@@ -104,7 +108,6 @@ vcgencmd measure_temp
 
 - [ ] Poznamenat si čísla z monitoru (Dnes u stánku, Dnes prošlo, špička)
 - [ ] Bezpečně vypnout Pi: `sudo shutdown -h now`, odpojit napájení až po zhasnutí zelené LED
-- [ ] Ukončit `caffeinate` na Macu
 
 ---
 

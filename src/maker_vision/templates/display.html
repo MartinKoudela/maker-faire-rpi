@@ -261,6 +261,7 @@
     let renderedKey = null;
     let showHeatmap = false;
     let showPose = false;
+    let offline = false;
 
     function element(tag, className, text) {
         const node = document.createElement(tag);
@@ -390,6 +391,7 @@
     async function refreshInfo() {
         try {
             const [status, describe] = await Promise.all([fetchJson("/api/status"), fetchJson("/api/describe")]);
+            if (offline) location.reload();
             const cloud = status.data.cloud;
             const counter = status.data.counter;
             showHeatmap = cloud.show_heatmap;
@@ -415,6 +417,7 @@
 
             renderAi(cloud.cloud_mode, describe.data.busy, describe.data.results);
         } catch (error) {
+            offline = true;
         }
     }
 
