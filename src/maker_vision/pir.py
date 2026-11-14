@@ -44,11 +44,12 @@ class PirSensor:
     def snapshot(self) -> dict:
         with self._lock:
             self._rollover()
+            held = self._last_motion and time.time() - self._last_motion < config.PIR_HOLD_SECONDS
             return {
                 "available": self._sensor is not None,
                 "error": self._error,
                 "pin": config.PIR_PIN,
-                "motion": self._motion,
+                "motion": bool(self._motion or held),
                 "seconds_since_motion": round(time.time() - self._last_motion, 1) if self._last_motion else None,
                 "triggers_today": self._triggers,
             }
