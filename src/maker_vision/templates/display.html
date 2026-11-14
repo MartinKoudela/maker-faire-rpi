@@ -57,6 +57,24 @@
             color: var(--text-2);
         }
 
+        .legend {
+            position: absolute;
+            left: 1rem;
+            bottom: 1rem;
+            z-index: 1;
+            padding: 0.6rem 0.8rem;
+            border-radius: 0.6rem;
+            background: rgba(12, 12, 14, 0.72);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+            color: var(--text-2);
+        }
+        .legend[hidden] { display: none; }
+        .legend b { display: block; font-weight: 600; color: var(--text); margin-bottom: 0.45rem; }
+        .legend .bar { width: 14rem; height: 0.45rem; border-radius: 999px; background: linear-gradient(90deg, rgba(40, 120, 255, 0.5), #28c8ff, #bef5ff, #fff); }
+        .legend .ends { display: flex; justify-content: space-between; margin-top: 0.35rem; font-size: 0.75rem; color: var(--muted); }
+
         .below { display: grid; grid-template-columns: 1fr 15rem; gap: 1.25rem; }
         .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
         .step { padding: 1.1rem 1.25rem; }
@@ -174,6 +192,11 @@
             <div class="mode" id="mode"></div>
             <img src="/stream" alt="">
             <canvas id="overlay"></canvas>
+            <div class="legend" id="legend" hidden>
+                <b>Kudy lidé chodí</b>
+                <div class="bar"></div>
+                <div class="ends"><span>jeden průchod</span><span>zastavili se</span></div>
+            </div>
         </div>
         <div class="below">
             <div class="steps">
@@ -367,7 +390,7 @@
 
     function renderMode(cloud) {
         const tags = [showPose ? "Kostra těla" : "Detekce lidí"];
-        if (showHeatmap) tags.push("Heatmapa");
+        if (showHeatmap) tags.push("Stopy pohybu");
         if (cloud.blur_faces) tags.push("Anonymizace obličejů");
         document.getElementById("mode").replaceChildren(...tags.map((tag) => element("span", null, tag)));
     }
@@ -405,6 +428,7 @@
             renderTech(status.data);
             renderSensor(status.data);
             renderMode(cloud);
+            document.getElementById("legend").hidden = !showHeatmap;
 
             const cloudOff = cloud.cloud_mode === "off";
             document.getElementById("step-cloud").classList.toggle("off", cloudOff);
