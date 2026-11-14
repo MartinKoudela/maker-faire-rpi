@@ -13,6 +13,7 @@ from maker_vision.detection import PersonDetector
 from maker_vision.faces import FaceBlurrer
 from maker_vision.overlay import draw_detections
 from maker_vision.settings import SettingsStore
+from maker_vision.smoothing import TrackSmoother
 
 NO_FACES = np.empty((0, 4), dtype=np.float32)
 
@@ -83,6 +84,7 @@ class Pipeline:
         self._source = create_source()
         self._detector = PersonDetector()
         self._faces = FaceBlurrer()
+        self._smoother = TrackSmoother()
         self._frame_condition = threading.Condition()
         self._detection_condition = threading.Condition()
         self._frame = EMPTY_FRAME
@@ -194,7 +196,7 @@ class Pipeline:
 
             try:
                 started = time.perf_counter()
-                detections = self._detector.detect(frame.image, pose=current.show_pose)
+                detections = self._smoother.apply(self._detector.detect(frame.image, pose=current.show_pose), time.monotonic())
                 detected = time.perf_counter()
                 faces = self._faces.detect(frame.image) if blur_faces else NO_FACES
                 faced = time.perf_counter()

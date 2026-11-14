@@ -4,11 +4,20 @@ import cv2
 import ncnn
 import numpy as np
 import supervision as sv
+import yaml
 
 from maker_vision import config
 
 COCO_PERSON_CLASS_ID = 0
 POSE_KEYPOINTS = 17
+
+
+def input_shape(model_dir: Path) -> tuple[int, int]:
+    try:
+        height, width = yaml.safe_load((model_dir / "metadata.yaml").read_text())["imgsz"]
+        return int(height), int(width)
+    except Exception:
+        return config.YOLO_INPUT_SIZE, config.YOLO_INPUT_SIZE
 
 
 def load_net(model_dir: Path) -> ncnn.Net:
@@ -23,10 +32,12 @@ class PersonDetector:
     def __init__(self) -> None:
         self._net = load_net(config.YOLO_MODEL_PATH)
         self._pose_net = load_net(config.POSE_MODEL_PATH)
+        self._shape = input_shape(config.YOLO_MODEL_PATH)
+        self._pose_shape = input_shape(config.POSE_MODEL_PATH)
         self._tracker = sv.ByteTrack()
 
     def detect(self, frame: np.ndarray, pose: bool = False) -> sv.Detections:
-        blob, scale = self._preprocess(frame)
+        blob, scale, offset = self._preprocess(frame, self._pose_shape if pose else self._shape)
         output = self._run(self._pose_net if pose else self._net, blob)
         predictions = output.T
         confidences = predictions[:, 4 + COCO_PERSON_CLASS_ID]
@@ -36,11 +47,11 @@ class PersonDetector:
         data = {}
         if pose:
             keypoints = predictions[:, 5:5 + POSE_KEYPOINTS * 3].reshape(-1, POSE_KEYPOINTS, 3).copy()
-            keypoints[:, :, :2] /= scale
+            keypoints[:, :, :2] = (keypoints[:, :, :2] - offset) / scale
             data["keypoints"] = keypoints.astype(np.float32)
 
         detections = sv.Detections(
-            xyxy=self._boxes(predictions[:, :4], scale),
+            xyxy=self._boxes(predictions[:, :4], scale, offset),
             confidence=confidences.astype(np.float32),
             class_id=np.full(len(confidences), COCO_PERSON_CLASS_ID, dtype=int),
             data=data,
@@ -59,30 +70,34 @@ class PersonDetector:
             return np.array(output)
 
     @staticmethod
-    def _preprocess(frame: np.ndarray) -> tuple[np.ndarray, float]:
-        input_size = config.YOLO_INPUT_SIZE
+    def _preprocess(frame: np.ndarray, shape: tuple[int, int]) -> tuple[np.ndarray, float, np.ndarray]:
+        input_height, input_width = shape
         height, width = frame.shape[:2]
-        scale = input_size / max(height, width)
+        scale = min(input_width / width, input_height / height)
         resized = cv2.resize(frame, (round(width * scale), round(height * scale)))
         resized = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
 
+        pad_y = input_height - resized.shape[0]
+        pad_x = input_width - resized.shape[1]
+        top, left = pad_y // 2, pad_x // 2
         padded = cv2.copyMakeBorder(
             resized,
-            top=0,
-            bottom=input_size - resized.shape[0],
-            left=0,
-            right=input_size - resized.shape[1],
+            top=top,
+            bottom=pad_y - top,
+            left=left,
+            right=pad_x - left,
             borderType=cv2.BORDER_CONSTANT,
             value=(114, 114, 114),
         )
 
         blob = padded.astype(np.float32) / 255.0
         blob = np.ascontiguousarray(blob.transpose(2, 0, 1))
-        return blob, scale
+        return blob, scale, np.array([left, top], dtype=np.float32)
 
     @staticmethod
-    def _boxes(boxes_cxcywh: np.ndarray, scale: float) -> np.ndarray:
+    def _boxes(boxes_cxcywh: np.ndarray, scale: float, offset: np.ndarray) -> np.ndarray:
         cx, cy, w, h = boxes_cxcywh.T
+        cx, cy = cx - offset[0], cy - offset[1]
         boxes_xyxy = np.stack(
             [(cx - w / 2) / scale, (cy - h / 2) / scale, (cx + w / 2) / scale, (cy + h / 2) / scale],
             axis=1,
