@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Maker Vision</title>
+    <title>Raspi Vision</title>
     <link rel="stylesheet" href="/static/css/theme.css">
     <style>
         html { font-size: 0.8333vw; height: 100%; overflow: hidden; }
@@ -162,11 +162,10 @@
 <body class="idle">
 <header>
     <div class="brand">
-        <h1>Maker Vision</h1>
+        <h1>Raspi Vision</h1>
         <span>Počítačové vidění na Raspberry Pi 5</span>
     </div>
     <div class="right">
-        <span class="status">Živě</span>
         <span class="clock" id="clock">--:--</span>
     </div>
 </header>
@@ -192,7 +191,7 @@
                 <div class="card step" id="step-cloud">
                     <div class="index">3</div>
                     <h3>Popíše, co vidí</h3>
-                    <p id="step-cloud-text">Na vyžádání odešle snímek jazykovému modelu, který scénu popíše česky.</p>
+                    <p id="step-cloud-text">Na vyžádání pošle snímek jazykovému modelu od OpenAI, který scénu popíše česky.</p>
                 </div>
             </div>
             <div class="card tech">
@@ -413,7 +412,7 @@
             document.getElementById("step-cloud").classList.toggle("off", cloudOff);
             document.getElementById("step-cloud-text").textContent = cloudOff
                 ? "Momentálně vypnuto. Vše běží pouze lokálně na Raspberry Pi."
-                : "Na vyžádání odešle snímek jazykovému modelu, který scénu popíše česky.";
+                : `Na vyžádání pošle snímek modelu ${cloud.model.replace(/^gpt/i, "GPT")} od OpenAI, který scénu popíše česky.`;
             document.getElementById("privacy").textContent = cloudOff
                 ? "Žádné záznamy se neukládají. Veškeré zpracování probíhá lokálně."
                 : "Žádné záznamy se neukládají. Popis scény zpracovává OpenAI.";

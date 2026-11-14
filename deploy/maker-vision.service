@@ -1,5 +1,5 @@
 [Unit]
-Description=Maker Vision booth (YOLO tracking + web dashboard)
+Description=Raspi Vision booth (YOLO tracking + web dashboard)
 After=network-online.target
 Wants=network-online.target
 Conflicts=g1-vision.service rpi-cam.service

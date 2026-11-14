@@ -1,5 +1,5 @@
 [Unit]
-Description=Maker Vision kiosk on tty1
+Description=Raspi Vision kiosk on tty1
 After=maker-vision.service systemd-user-sessions.service dbus.socket systemd-logind.service getty@tty1.service
 Wants=maker-vision.service dbus.socket systemd-logind.service
 Conflicts=getty@tty1.service

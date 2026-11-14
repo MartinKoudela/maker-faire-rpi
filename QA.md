@@ -1,4 +1,4 @@
-# Maker Vision – otázky a odpovědi
+# Raspi Vision – otázky a odpovědi
 
 Podklady pro vysvětlování u stánku. Každá odpověď má krátkou verzi na řeč a případně detail pro zvídavé.
 

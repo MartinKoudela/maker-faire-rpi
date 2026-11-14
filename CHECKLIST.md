@@ -1,4 +1,4 @@
-# Maker Vision – provozní checklist
+# Raspi Vision – provozní checklist
 
 Maker Faire Olomouc · neděle 15. 11. 2026
 
