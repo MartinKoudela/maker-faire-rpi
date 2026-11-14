@@ -12,6 +12,7 @@ from maker_vision.counter import PeopleCounter
 from maker_vision.describe import OPENAI_AVAILABLE, Describer
 from maker_vision.heatmap import Heatmap
 from maker_vision.pipeline import Pipeline
+from maker_vision.pir import PirSensor
 from maker_vision.settings import CLOUD_MODES, SettingsStore
 from maker_vision.system import SystemMonitor
 from maker_vision.usage import UsageCounter
@@ -25,6 +26,7 @@ def create_app(
     counter: PeopleCounter,
     system: SystemMonitor,
     heatmap: Heatmap,
+    pir: PirSensor,
 ) -> Flask:
     app = Flask(__name__)
 
@@ -78,6 +80,7 @@ def create_app(
             "cloud": cloud_state(),
             "counter": counter.snapshot(),
             "system": system.snapshot(),
+            "pir": pir.snapshot(),
         })
 
     @app.route("/api/counter", methods=["GET"])

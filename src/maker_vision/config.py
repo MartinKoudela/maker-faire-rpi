@@ -70,5 +70,7 @@ STREAM_MAX_FPS = 30
 PROJECT_URL = os.environ.get("PROJECT_URL", "").strip() or None
 PROJECT_LABEL = os.environ.get("PROJECT_LABEL", "").strip() or None
 
+PIR_PIN = int(_pir) if (_pir := os.environ.get("PIR_PIN", "17").strip()) else None
+
 WEB_HOST = "0.0.0.0"
 WEB_PORT = int(os.environ.get("WEB_PORT", "5000"))

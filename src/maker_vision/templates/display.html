@@ -96,7 +96,7 @@
         .panel { padding: 1.25rem 1.4rem; }
         .ai { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
         .ai .head { display: flex; justify-content: space-between; align-items: center; }
-        .ai .content { margin-top: 1rem; flex: 1; min-height: 0; overflow: hidden; }
+        .ai .content { margin-top: 1rem; flex: 1; min-height: 0; overflow: hidden; mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent); }
         .ai .summary { font-size: 1.5rem; line-height: 1.4; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 1.1rem; }
         .ai .hint { font-size: 1.15rem; line-height: 1.55; color: var(--text-2); }
         .ai ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.1rem; }
@@ -126,6 +126,17 @@
             animation: spin 0.9s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        .sensor[hidden] { display: none; }
+        .versus { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; margin-top: 0.8rem; }
+        .versus .vs { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+        .versus .label { font-size: 0.85rem; color: var(--text-2); margin-bottom: 0.35rem; }
+        .versus .state { display: flex; align-items: center; gap: 0.55rem; font-size: 1.6rem; font-weight: 650; letter-spacing: -0.02em; }
+        .versus .state i { width: 0.8rem; height: 0.8rem; border-radius: 50%; background: var(--border-strong); flex: none; }
+        .versus .state.motion i { background: var(--green); box-shadow: 0 0 0 0.35rem rgba(60, 207, 127, 0.18); }
+        .versus .state.motion { color: var(--green); }
+        .versus .state.ai { color: var(--accent); }
+        .versus p { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; }
 
         .chart svg { display: block; width: 100%; height: 6.5rem; margin-top: 0.9rem; overflow: visible; }
 
@@ -196,6 +207,22 @@
             <div class="card number" id="n-today"><div class="caption">Dnes u stánku</div><b>0</b></div>
             <div class="card number" id="n-passed"><div class="caption">Dnes prošlo</div><b>0</b></div>
         </div>
+        <section class="card panel sensor" id="sensor" hidden>
+            <div class="caption">Klasický senzor vs. umělá inteligence</div>
+            <div class="versus">
+                <div>
+                    <div class="label">PIR čidlo pohybu</div>
+                    <div class="state" id="pir-state"><i></i><span>Klid</span></div>
+                    <p>Pozná jen, že se něco hýbe</p>
+                </div>
+                <div class="vs">vs.</div>
+                <div>
+                    <div class="label">Kamera s AI</div>
+                    <div class="state ai" id="ai-people">0 lidí</div>
+                    <p>Ví kolik lidí, kde jsou a jak se hýbou</p>
+                </div>
+            </div>
+        </section>
         <section class="card panel ai">
             <div class="head">
                 <div class="caption">Co vidí AI</div>
@@ -322,6 +349,22 @@
         tempNode.className = temp >= 75 ? "warn" : "";
     }
 
+    function people(count) {
+        if (count === 1) return "1 člověk";
+        if (count >= 2 && count <= 4) return `${count} lidé`;
+        return `${count} lidí`;
+    }
+
+    function renderSensor(status) {
+        const pir = status.pir;
+        document.getElementById("sensor").hidden = !pir.available;
+        if (!pir.available) return;
+        const state = document.getElementById("pir-state");
+        state.classList.toggle("motion", pir.motion);
+        state.querySelector("span").textContent = pir.motion ? "Pohyb" : "Klid";
+        document.getElementById("ai-people").textContent = people(status.counter.now);
+    }
+
     function renderMode(cloud) {
         const tags = [showPose ? "Kostra těla" : "Detekce lidí"];
         if (showHeatmap) tags.push("Heatmapa");
@@ -358,6 +401,7 @@
             setNumber("n-passed", counter.line_in + counter.line_out);
             renderChart(counter.hourly);
             renderTech(status.data);
+            renderSensor(status.data);
             renderMode(cloud);
 
             const cloudOff = cloud.cloud_mode === "off";

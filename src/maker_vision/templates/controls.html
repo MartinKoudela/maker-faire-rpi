@@ -136,6 +136,7 @@
         <span>CPU<b id="temp">–</b></span>
         <span>Zátěž<b id="load">–</b></span>
         <span>Snímek<b id="age">–</b></span>
+        <span>PIR<b id="pir">–</b></span>
     </div>
     <span class="alert" id="throttle" hidden></span>
     <nav>
@@ -375,6 +376,9 @@
         try {
             const { data } = await fetchJson("/api/status");
             document.getElementById("people").textContent = data.people_now;
+            const pirNode = document.getElementById("pir");
+            pirNode.textContent = data.pir.available ? (data.pir.motion ? "pohyb" : "klid") + ` · ${data.pir.triggers_today}×` : "–";
+            pirNode.title = data.pir.error || "";
             document.getElementById("fps").textContent = data.stream_fps;
             document.getElementById("detect-fps").textContent = data.detect_fps;
             document.getElementById("age").textContent = data.frame_age === null ? "–" : `${data.frame_age} s`;
