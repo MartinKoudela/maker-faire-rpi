@@ -22,12 +22,32 @@ class PicameraSource:
         from picamera2 import Picamera2
 
         self._camera = Picamera2()
-        video_config = self._camera.create_video_configuration(
-            main={"size": (config.CAMERA_WIDTH, config.CAMERA_HEIGHT), "format": "RGB888"},
-            transform=Transform(hflip=config.CAMERA_ROTATE_180, vflip=config.CAMERA_ROTATE_180),
-            controls={"FrameRate": config.CAMERA_FPS},
-        )
+        mode = self._full_view_mode()
+        options = {
+            "main": {"size": (config.CAMERA_WIDTH, config.CAMERA_HEIGHT), "format": "RGB888"},
+            "transform": Transform(hflip=config.CAMERA_ROTATE_180, vflip=config.CAMERA_ROTATE_180),
+            "controls": {"FrameRate": config.CAMERA_FPS},
+        }
+        if mode is not None:
+            options["sensor"] = {"output_size": mode["size"], "bit_depth": mode["bit_depth"]}
+        try:
+            video_config = self._camera.create_video_configuration(**options)
+        except TypeError:
+            options.pop("sensor", None)
+            if mode is not None:
+                options["raw"] = {"size": mode["size"]}
+            video_config = self._camera.create_video_configuration(**options)
         self._camera.configure(video_config)
+        print(f"[camera] sensor mode {mode['size'] if mode else 'auto'}, crop {mode['crop_limits'] if mode else '-'}", flush=True)
+
+    def _full_view_mode(self) -> dict | None:
+        try:
+            modes = [m for m in self._camera.sensor_modes if m.get("fps", 0) >= config.CAMERA_FPS]
+        except Exception:
+            return None
+        if not modes:
+            return None
+        return max(modes, key=lambda m: (m["crop_limits"][2] * m["crop_limits"][3], -m["size"][0] * m["size"][1]))
 
     def start(self) -> None:
         self._camera.start()
